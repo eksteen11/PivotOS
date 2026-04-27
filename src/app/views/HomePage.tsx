@@ -1,11 +1,27 @@
-import { Link } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 
+import { hasSupabaseEnv } from '../../lib/supabase/client'
+import { useSupabaseSession } from '../../lib/supabase/useSession'
 import { MarketingLanding } from './MarketingLanding'
 
 export function HomePage() {
+  const [searchParams] = useSearchParams()
+  const { loading, session } = useSupabaseSession()
+  const showGuestAuth = hasSupabaseEnv && !loading && !session
+
+  if (searchParams.get('signin') === '1') {
+    return <Navigate to="/home/join?m=signin" replace />
+  }
+
   return (
     <main className="marketingMain">
-      <MarketingLanding />
+      {!hasSupabaseEnv ? (
+        <p className="marketingContainer muted" style={{ paddingTop: 16, margin: 0 }}>
+          Demo mode: add Supabase environment variables to enable sign-in and cloud sync.
+        </p>
+      ) : null}
+
+      <MarketingLanding showGuestAuth={showGuestAuth} />
 
       <section className="marketingSection marketingSectionCta">
         <div className="marketingContainer">
@@ -28,14 +44,16 @@ export function HomePage() {
               <p className="howDesc">Meetings, tasks, deals, and AI support run in one continuous flow.</p>
             </div>
           </div>
-          <div className="heroCtas heroCtasCenter">
-            <Link className="btn btnInline accent" to="/command">
-              Open Command Centre
-            </Link>
-            <Link className="btn btnInline secondary" to="/today">
-              Open Today view
-            </Link>
-          </div>
+          {!showGuestAuth ? (
+            <div className="heroCtas heroCtasCenter">
+              <Link className="btn btnInline accent" to="/command">
+                Open Command Centre
+              </Link>
+              <Link className="btn btnInline secondary" to="/today">
+                Open Today view
+              </Link>
+            </div>
+          ) : null}
         </div>
       </section>
     </main>

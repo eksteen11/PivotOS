@@ -116,22 +116,22 @@ $$;
 drop trigger if exists entities_set_updated_at on public.entities;
 create trigger entities_set_updated_at
 before update on public.entities
-for each row execute procedure public.set_updated_at();
+for each row execute function public.set_updated_at();
 
 drop trigger if exists divisions_set_updated_at on public.divisions;
 create trigger divisions_set_updated_at
 before update on public.divisions
-for each row execute procedure public.set_updated_at();
+for each row execute function public.set_updated_at();
 
 drop trigger if exists items_set_updated_at on public.items;
 create trigger items_set_updated_at
 before update on public.items
-for each row execute procedure public.set_updated_at();
+for each row execute function public.set_updated_at();
 
 drop trigger if exists sync_outbox_set_updated_at on public.sync_outbox;
 create trigger sync_outbox_set_updated_at
 before update on public.sync_outbox
-for each row execute procedure public.set_updated_at();
+for each row execute function public.set_updated_at();
 
 create index if not exists idx_entities_user on public.entities (user_id, sort_order);
 create index if not exists idx_divisions_entity on public.divisions (user_id, entity_id, sort_order);

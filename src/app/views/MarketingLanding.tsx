@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 
-export function MarketingLanding({ onPrimary }: { onPrimary?: () => void }) {
+/** Guests: no hero buttons (use header). Signed in: app CTAs. */
+export function MarketingLanding({ showGuestAuth }: { showGuestAuth?: boolean }) {
   return (
     <>
       <section className="marketingHero" aria-labelledby="marketing-hero-title">
@@ -13,26 +14,16 @@ export function MarketingLanding({ onPrimary }: { onPrimary?: () => void }) {
             Build lasting clarity across personal work, DigiKraal, Farm Feed, and North Point Realty — one inbox, one Today
             view, and AI that executes with you.
           </p>
-          <div className="heroCtas">
-            {onPrimary ? (
-              <button type="button" className="btn btnInline accent" onClick={onPrimary}>
-                Get started free
-              </button>
-            ) : (
+          {showGuestAuth ? null : (
+            <div className="heroCtas">
               <Link className="btn btnInline accent" to="/command">
                 Open Command Centre
               </Link>
-            )}
-            {onPrimary ? (
-              <a className="btn btnInline secondary" href="#pivotos-sign-in">
-                Sign in
-              </a>
-            ) : (
               <Link className="btn btnInline secondary" to="/today">
                 See Today view
               </Link>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -114,6 +105,56 @@ export function MarketingLanding({ onPrimary }: { onPrimary?: () => void }) {
             </ul>
             <Link className="btn btnInline accent" to="/agents">
               Open AI workspace
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="marketingSection" id="marketing-meetings">
+        <div className="marketingContainer">
+          <h2 className="sectionTitle sectionTitleCenter">Meetings workflow — from spreadsheet to command centre</h2>
+          <p className="sectionLead sectionLeadCenter">
+            Your DJ Werk sheet is now the blueprint: one place for new meetings, the week grid, today&apos;s list, and a
+            master list per entity — Digikraal, DJ Eksteen, Northpoint — with Who, Where, and Description.
+          </p>
+          <div className="meetingJourneyGrid">
+            <div className="meetingJourneyCard">
+              <div className="meetingJourneyStep">1</div>
+              <h3 className="meetingJourneyTitle">Landing → context</h3>
+              <p className="meetingJourneyDesc">
+                Understand how entities split your world, then open the app. Real schedule data can load from Supabase after
+                sync.
+              </p>
+            </div>
+            <div className="meetingJourneyCard">
+              <div className="meetingJourneyStep">2</div>
+              <h3 className="meetingJourneyTitle">New meeting</h3>
+              <p className="meetingJourneyDesc">
+                Capture Entity, Date, Time, Who, Description, Where — same fields as your &quot;New Meeting&quot; form.
+              </p>
+            </div>
+            <div className="meetingJourneyCard">
+              <div className="meetingJourneyStep">3</div>
+              <h3 className="meetingJourneyTitle">Week &amp; day</h3>
+              <p className="meetingJourneyDesc">
+                Scan Sunday–Saturday like &quot;Meetings of the week&quot;, or focus a single day like &quot;Meetings of the
+                day&quot;.
+              </p>
+            </div>
+            <div className="meetingJourneyCard">
+              <div className="meetingJourneyStep">4</div>
+              <h3 className="meetingJourneyTitle">Detail &amp; follow-ups</h3>
+              <p className="meetingJourneyDesc">
+                Edit notes, then spawn tasks into Today View without losing meeting context.
+              </p>
+            </div>
+          </div>
+          <div className="heroCtas heroCtasCenter" style={{ marginTop: 20 }}>
+            <Link className="btn btnInline accent" to="/meetings">
+              Open Meetings
+            </Link>
+            <Link className="btn btnInline secondary" to="/command">
+              Back to Command Centre
             </Link>
           </div>
         </div>

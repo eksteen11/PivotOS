@@ -1,9 +1,11 @@
 import { useMemo } from 'react'
 
 import { setItemStatus, softDeleteItem, usePlannedTasks } from '../../lib/items/itemsRepo'
+import { ALL_ENTITIES_SLUG, useAppState } from '../state/AppState'
 
 export function TasksPage() {
-  const tasks = usePlannedTasks(80) ?? []
+  const { entityId } = useAppState()
+  const tasks = usePlannedTasks(80, entityId) ?? []
 
   const groups = useMemo(() => {
     const active = tasks.filter((t) => t.status === 'in_progress')
@@ -17,6 +19,9 @@ export function TasksPage() {
     <section>
       <div className="card">
         <h2 className="cardTitle">Tasks</h2>
+        <p className="muted" style={{ marginTop: 0, fontSize: 13 }}>
+          Scope: {entityId === ALL_ENTITIES_SLUG ? 'All entities' : entityId}
+        </p>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <span className="statusPill">Urgent {groups.urgent.length}</span>
           <span className="statusPill">In progress {groups.active.length}</span>

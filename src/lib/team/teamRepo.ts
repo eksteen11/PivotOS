@@ -22,6 +22,66 @@ export type EntityInvite = {
   createdAt: string
 }
 
+export type MyEntityMembership = {
+  entityId: string
+  slug: string
+  name: string
+  role: EntityRole
+}
+
+/** Current user’s roles across entities (for account menu / profile). */
+export function useMyMemberships(userId: string | null) {
+  const [memberships, setMemberships] = useState<MyEntityMembership[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!userId || !supabase) {
+      setMemberships([])
+      return
+    }
+    let cancelled = false
+    setLoading(true)
+    void (async () => {
+      try {
+        const { data: memberRows, error: mErr } = await supabase
+          .from('entity_members')
+          .select('entity_id, role')
+          .eq('user_id', userId)
+        if (mErr) throw mErr
+        const ids = [...new Set((memberRows ?? []).map((r: { entity_id: string }) => r.entity_id))]
+        let entById = new Map<string, { name: string; slug: string }>()
+        if (ids.length > 0) {
+          const { data: entRows, error: eErr } = await supabase.from('entities').select('id, name, slug').in('id', ids)
+          if (eErr) throw eErr
+          for (const e of entRows ?? []) {
+            entById.set(e.id as string, { name: (e.name as string) ?? 'Entity', slug: (e.slug as string) ?? '' })
+          }
+        }
+        const list: MyEntityMembership[] = (memberRows ?? []).map((row: any) => {
+          const ent = entById.get(row.entity_id as string)
+          return {
+            entityId: row.entity_id as string,
+            slug: ent?.slug ?? '',
+            name: ent?.name ?? 'Entity',
+            role: row.role as EntityRole,
+          }
+        })
+        list.sort((a, b) => a.name.localeCompare(b.name))
+        if (!cancelled) setMemberships(list)
+      } catch {
+        if (!cancelled) setMemberships([])
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [userId])
+
+  return { memberships, loading }
+}
+
 export function useEntityTeam(entityId: string | null) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)

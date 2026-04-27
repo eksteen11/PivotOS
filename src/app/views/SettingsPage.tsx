@@ -4,7 +4,7 @@ import { hasSupabaseEnv, supabase } from '../../lib/supabase/client'
 import { useSupabaseSession } from '../../lib/supabase/useSession'
 import { db } from '../../lib/db/db'
 import { changeEntityMemberRole, createEntityInvite, revokeEntityInvite, useEntityTeam, type EntityRole } from '../../lib/team/teamRepo'
-import { useAppState } from '../state/AppState'
+import { ALL_ENTITIES_SLUG, isAllEntitiesScope, useAppState } from '../state/AppState'
 
 export function SettingsPage() {
   const { session } = useSupabaseSession()
@@ -15,6 +15,7 @@ export function SettingsPage() {
   const [teamNote, setTeamNote] = useState<string | null>(null)
 
   const currentEntityLabel = useMemo(() => {
+    if (entityId === ALL_ENTITIES_SLUG) return 'All entities'
     return entities.find((e) => e.id === entityId)?.label ?? entityId
   }, [entities, entityId])
 
@@ -67,9 +68,17 @@ export function SettingsPage() {
 
       <div className="card">
         <h2 className="cardTitle">Team Access</h2>
-        {!session || !currentEntityDbId ? (
+        {!session ? (
           <p className="muted" style={{ margin: 0 }}>
-            Sign in and sync an entity to manage team access.
+            Sign in to manage team access.
+          </p>
+        ) : isAllEntitiesScope(entityId) ? (
+          <p className="muted" style={{ margin: 0 }}>
+            Invites and roles are per entity. Select one company in the header (not {currentEntityLabel}), then return here.
+          </p>
+        ) : !currentEntityDbId ? (
+          <p className="muted" style={{ margin: 0 }}>
+            Sign in and sync this entity to manage team access.
           </p>
         ) : (
           <>

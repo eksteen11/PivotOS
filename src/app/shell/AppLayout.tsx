@@ -1,7 +1,8 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 
 import { useDirtyCount, useLastSyncAt } from '../../lib/sync/syncStatus'
-import { useAppState } from '../state/AppState'
+import { AccountMenu } from './AccountMenu'
+import { ALL_ENTITIES_SLUG, useAppState } from '../state/AppState'
 
 function useRouteLabel() {
   const { pathname } = useLocation()
@@ -43,9 +44,12 @@ export function AppLayout() {
                   <div className="appHintSub">{hint}</div>
                 </div>
               </div>
-              <div className="appHint" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span className={`appStatusDot${online ? '' : ' appStatusDotOffline'}`} aria-hidden />
-                {online ? (dirtyCount ? `Sync ${dirtyCount}` : lastSyncAt ? 'Synced' : 'Online') : 'Offline'}
+              <div className="appHint appHintWithAccount" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span className={`appStatusDot${online ? '' : ' appStatusDotOffline'}`} aria-hidden />
+                  {online ? (dirtyCount ? `Sync ${dirtyCount}` : lastSyncAt ? 'Synced' : 'Online') : 'Offline'}
+                </span>
+                <AccountMenu variant="app" />
               </div>
             </div>
 
@@ -53,6 +57,7 @@ export function AppLayout() {
             <div className="field">
               <label>Entity</label>
               <select value={entityId} onChange={(e) => setEntityId(e.target.value)}>
+                <option value={ALL_ENTITIES_SLUG}>All entities</option>
                 {entities.map((e) => (
                   <option key={e.id} value={e.id}>
                     {e.label}

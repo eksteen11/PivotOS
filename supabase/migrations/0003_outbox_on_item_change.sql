@@ -28,7 +28,7 @@ $$;
 drop trigger if exists items_outbox_on_insert on public.items;
 create trigger items_outbox_on_insert
 after insert on public.items
-for each row execute procedure public.enqueue_item_outbox_event();
+for each row execute function public.enqueue_item_outbox_event();
 
 drop trigger if exists items_outbox_on_update on public.items;
 create trigger items_outbox_on_update
@@ -39,5 +39,5 @@ when (
   (old.status is distinct from new.status) or
   (old.deleted_at is distinct from new.deleted_at)
 )
-execute procedure public.enqueue_item_outbox_event();
+execute function public.enqueue_item_outbox_event();
 

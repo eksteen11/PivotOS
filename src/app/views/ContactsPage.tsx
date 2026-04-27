@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 
-import { useAppState } from '../state/AppState'
+import { ALL_ENTITIES_SLUG, useAppState } from '../state/AppState'
 
 type Contact = {
   id: string
@@ -36,7 +36,8 @@ export function ContactsPage() {
     },
   ])
 
-  const entityLabel = entities.find((e) => e.id === entityId)?.label ?? entityId
+  const entityLabel =
+    entityId === ALL_ENTITIES_SLUG ? 'All entities' : entities.find((e) => e.id === entityId)?.label ?? entityId
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()

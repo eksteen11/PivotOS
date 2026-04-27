@@ -46,12 +46,12 @@ on conflict (entity_id, user_id) do nothing;
 drop trigger if exists entity_members_set_updated_at on public.entity_members;
 create trigger entity_members_set_updated_at
 before update on public.entity_members
-for each row execute procedure public.set_updated_at();
+for each row execute function public.set_updated_at();
 
 drop trigger if exists entity_invites_set_updated_at on public.entity_invites;
 create trigger entity_invites_set_updated_at
 before update on public.entity_invites
-for each row execute procedure public.set_updated_at();
+for each row execute function public.set_updated_at();
 
 alter table public.entity_members enable row level security;
 alter table public.entity_invites enable row level security;

@@ -37,5 +37,5 @@ $$;
 drop trigger if exists on_auth_user_created_seed on auth.users;
 create trigger on_auth_user_created_seed
 after insert on auth.users
-for each row execute procedure public.handle_new_user_seed();
+for each row execute function public.handle_new_user_seed();
 

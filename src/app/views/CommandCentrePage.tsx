@@ -1,14 +1,17 @@
 import { Link } from 'react-router-dom'
 
 import { usePlannedTasks, useRecentInboxItems } from '../../lib/items/itemsRepo'
-import { useAppState } from '../state/AppState'
+import { ALL_ENTITIES_SLUG, useAppState } from '../state/AppState'
 
 export function CommandCentrePage() {
   const { entities, entityId } = useAppState()
-  const tasks = usePlannedTasks(50) ?? []
-  const inbox = useRecentInboxItems(30) ?? []
+  const tasks = usePlannedTasks(50, entityId) ?? []
+  const inbox = useRecentInboxItems(30, entityId) ?? []
 
-  const entityLabel = entities.find((e) => e.id === entityId)?.label ?? 'Current entity'
+  const entityLabel =
+    entityId === ALL_ENTITIES_SLUG
+      ? 'All entities'
+      : entities.find((e) => e.id === entityId)?.label ?? 'Current entity'
   const urgentTasks = tasks.filter((t) => t.priority >= 3 && t.status !== 'done' && t.status !== 'cancelled')
   const waitingTasks = tasks.filter((t) => t.status === 'waiting')
   const inProgress = tasks.filter((t) => t.status === 'in_progress')

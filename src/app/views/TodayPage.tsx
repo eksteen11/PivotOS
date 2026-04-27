@@ -3,12 +3,12 @@ import { Link } from 'react-router-dom'
 
 import { setItemStatus, usePlannedTasks } from '../../lib/items/itemsRepo'
 import { useTodayPlan } from '../../lib/plan/planRepo'
-import { useAppState } from '../state/AppState'
+import { ALL_ENTITIES_SLUG, useAppState } from '../state/AppState'
 
 export function TodayPage() {
   const { entities, entityId, divisionsForCurrentEntity, divisionId } = useAppState()
   const plan = useTodayPlan()
-  const tasks = usePlannedTasks(25) ?? []
+  const tasks = usePlannedTasks(25, entityId) ?? []
   const inProgress = tasks.find((t) => t.status === 'in_progress') ?? null
   const waitingCount = tasks.filter((t) => t.status === 'waiting').length
   const dueTodayCount = tasks.filter((t) => {
@@ -19,6 +19,7 @@ export function TodayPage() {
   }).length
 
   const focusLabel = useMemo(() => {
+    if (entityId === ALL_ENTITIES_SLUG) return 'All entities'
     const entity = entities.find((e) => e.id === entityId)?.label ?? '—'
     const division = divisionId ? divisionsForCurrentEntity.find((d) => d.id === divisionId)?.label ?? '—' : null
     return division ? `${entity} / ${division}` : entity

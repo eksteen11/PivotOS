@@ -1,7 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 
+import { isAllEntitiesScope } from '../../lib/appScope'
 import { db } from '../../lib/db/db'
+
+export { ALL_ENTITIES_SLUG, isAllEntitiesScope } from '../../lib/appScope'
 
 export type EntityId = string
 export type DivisionId = string
@@ -59,16 +62,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return [slugToId, bySlug] as const
   }, []) ?? [new Map<string, string>(), new Map<string, Division[]>()]
 
-  const divisionsForCurrentEntity = divisionsByEntitySlug.get(entityId) ?? []
+  const divisionsForCurrentEntity = isAllEntitiesScope(entityId)
+    ? []
+    : divisionsByEntitySlug.get(entityId) ?? []
 
   const value: AppState = useMemo(
     () => ({
       entities,
       divisionsForCurrentEntity,
       entityId,
-      currentEntityDbId: entitySlugToDbId.get(entityId) ?? null,
+      currentEntityDbId: isAllEntitiesScope(entityId) ? null : entitySlugToDbId.get(entityId) ?? null,
       setEntityId: (id) => {
         setEntityId(id)
+        if (isAllEntitiesScope(id)) {
+          setDivisionId(null)
+          return
+        }
         const firstDivision = divisionsByEntitySlug.get(id)?.[0]?.id ?? null
         setDivisionId((prev) => {
           if (!prev) return firstDivision
@@ -83,6 +92,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (entitySlugToDbId.size === 0) return
+    if (isAllEntitiesScope(entityId)) return
     if (entitySlugToDbId.has(entityId)) return
     const first = entities[0]?.id
     if (!first || first === entityId) return

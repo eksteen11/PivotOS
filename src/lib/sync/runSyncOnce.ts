@@ -42,8 +42,12 @@ export async function runSyncOnce(session: Session) {
   if (!navigator.onLine) return
 
   await syncEntitiesAndDivisions(session)
-  await pushDirtyItems(session)
-  await pullUpdatedItems(session)
+  await pullUpdatedItems(session.user.id)
+  try {
+    await pushDirtyItems(session)
+  } catch {
+    // Local uploads can fail (RLS, validation); remote data was already pulled above.
+  }
 
   await db.kv.put({ key: 'lastSyncOkAt', value: new Date().toISOString() })
 }
@@ -131,8 +135,12 @@ async function pushDirtyItems(session: Session) {
   )
 }
 
-async function pullUpdatedItems(_session: Session) {
-  const meta = await db.kv.get('lastPullUpdatedAt')
+function pullCursorKey(userId: string) {
+  return `lastPullUpdatedAt:${userId}` as const
+}
+
+async function pullUpdatedItems(userId: string) {
+  const meta = await db.kv.get(pullCursorKey(userId))
   const lastPullUpdatedAt = (meta?.value as string | undefined) ?? '1970-01-01T00:00:00.000Z'
 
   const { data, error } = await supabase!
@@ -186,6 +194,6 @@ async function pullUpdatedItems(_session: Session) {
     await db.items.put(mapped)
   }
 
-  await db.kv.put({ key: 'lastPullUpdatedAt', value: rows[rows.length - 1]!.updated_at })
+  await db.kv.put({ key: pullCursorKey(userId), value: rows[rows.length - 1]!.updated_at })
 }
 

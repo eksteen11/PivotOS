@@ -5,14 +5,14 @@ import { hasSupabaseEnv } from '../../lib/supabase/client'
 import { useSupabaseSession } from '../../lib/supabase/useSession'
 import { setTodayPlan } from '../../lib/plan/planRepo'
 import { createPlannedTask, usePlannedTasks, useRecentInboxItems } from '../../lib/items/itemsRepo'
-import { useAppState } from '../state/AppState'
+import { ALL_ENTITIES_SLUG, useAppState } from '../state/AppState'
 
 export function AgentsPage() {
   const { entityId, divisionId } = useAppState()
   const { session } = useSupabaseSession()
-  const inbox = useRecentInboxItems(1) ?? []
+  const inbox = useRecentInboxItems(1, entityId) ?? []
   const latest = inbox[0] ?? null
-  const planned = usePlannedTasks(25) ?? []
+  const planned = usePlannedTasks(25, entityId) ?? []
   const [busy, setBusy] = useState<'none' | 'capture' | 'plan'>('none')
   const [note, setNote] = useState<string | null>(null)
 
@@ -77,7 +77,12 @@ export function AgentsPage() {
               setNote(null)
               try {
                 const res = await aiBuildDailyPlan({
-                  context: divisionId ? `${entityId}:${divisionId}` : entityId,
+                  context:
+                    entityId === ALL_ENTITIES_SLUG
+                      ? 'all'
+                      : divisionId
+                        ? `${entityId}:${divisionId}`
+                        : entityId,
                   tasks: plannedTitles.slice(0, 25),
                 })
                 await setTodayPlan({ createdAt: new Date().toISOString(), top3: res.top3 ?? [], blocks: res.blocks ?? [] })

@@ -1,15 +1,17 @@
 import { useMemo, useState } from 'react'
 
 import { convertInboxNoteToTask, createInboxItem, softDeleteItem, useRecentInboxItems } from '../../lib/items/itemsRepo'
-import { useAppState } from '../state/AppState'
+import { ALL_ENTITIES_SLUG, isAllEntitiesScope, useAppState } from '../state/AppState'
 
 export function InboxPage() {
   const { entities, entityId, divisionsForCurrentEntity, divisionId } = useAppState()
   const [text, setText] = useState('')
-  const items = useRecentInboxItems(12) ?? []
+  const items = useRecentInboxItems(12, entityId) ?? []
+  const captureEntitySlug = isAllEntitiesScope(entityId) ? (entities[0]?.id ?? 'dj') : entityId
   const longItems = items.filter((x) => (x.content ?? '').length > 180).length
 
   const focusLabel = useMemo(() => {
+    if (entityId === ALL_ENTITIES_SLUG) return 'All entities (new notes go to your first entity until you pick one)'
     const entity = entities.find((e) => e.id === entityId)?.label ?? '—'
     const division = divisionId ? divisionsForCurrentEntity.find((d) => d.id === divisionId)?.label ?? '—' : null
     return division ? `${entity} / ${division}` : entity
@@ -36,8 +38,8 @@ export function InboxPage() {
             const trimmed = text.trim()
             if (!trimmed) return
             await createInboxItem({
-              entitySlug: entityId,
-              divisionSlug: divisionId ?? null,
+              entitySlug: captureEntitySlug,
+              divisionSlug: isAllEntitiesScope(entityId) ? null : divisionId ?? null,
               content: trimmed,
             })
             setText('')

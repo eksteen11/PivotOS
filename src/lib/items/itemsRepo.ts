@@ -1,6 +1,12 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 
+import { ALL_ENTITIES_SLUG } from '../appScope'
 import { db, type DbItem } from '../db/db'
+
+function itemMatchesEntityScope(row: DbItem, entityScope: string): boolean {
+  if (entityScope === ALL_ENTITIES_SLUG) return true
+  return row.entitySlug === entityScope
+}
 
 export async function setItemStatus(id: string, status: DbItem['status']) {
   const current = await db.items.get(id)
@@ -43,7 +49,7 @@ export async function convertInboxNoteToTask(id: string) {
   })
 }
 
-export function usePlannedTasks(limit = 25) {
+export function usePlannedTasks(limit = 25, entityScope: string = ALL_ENTITIES_SLUG) {
   return useLiveQuery(async () => {
     const rows = await db.items
       .where('status')
@@ -51,11 +57,12 @@ export function usePlannedTasks(limit = 25) {
       .and((x) => x.type === 'task' && x.deletedAt == null)
       .sortBy('clientUpdatedAt')
 
-    return rows.slice(-limit).reverse()
-  }, [limit])
+    const scoped = rows.filter((x) => itemMatchesEntityScope(x, entityScope))
+    return scoped.slice(-limit).reverse()
+  }, [limit, entityScope])
 }
 
-export function useRecentInboxItems(limit = 12) {
+export function useRecentInboxItems(limit = 12, entityScope: string = ALL_ENTITIES_SLUG) {
   return useLiveQuery(async () => {
     const rows = await db.items
       .where('status')
@@ -63,8 +70,9 @@ export function useRecentInboxItems(limit = 12) {
       .and((x) => x.deletedAt == null)
       .sortBy('clientUpdatedAt')
 
-    return rows.slice(-limit).reverse()
-  }, [limit])
+    const scoped = rows.filter((x) => itemMatchesEntityScope(x, entityScope))
+    return scoped.slice(-limit).reverse()
+  }, [limit, entityScope])
 }
 
 export async function createInboxItem(input: {

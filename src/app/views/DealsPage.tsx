@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 
-import { useAppState } from '../state/AppState'
+import { ALL_ENTITIES_SLUG, useAppState } from '../state/AppState'
 
 type Stage = 'lead' | 'active' | 'negotiation' | 'won' | 'lost'
 type Deal = {
@@ -45,7 +45,8 @@ export function DealsPage() {
     },
   ])
 
-  const entityLabel = entities.find((e) => e.id === entityId)?.label ?? entityId
+  const entityLabel =
+    entityId === ALL_ENTITIES_SLUG ? 'All entities' : entities.find((e) => e.id === entityId)?.label ?? entityId
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const selected = useMemo(() => deals.find((d) => d.id === selectedId) ?? deals[0] ?? null, [deals, selectedId])
 
