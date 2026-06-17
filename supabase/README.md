@@ -10,6 +10,8 @@
   - `supabase/migrations/0003_outbox_on_item_change.sql`
   - `supabase/migrations/0004_entity_memberships_and_rls.sql`
   - `supabase/migrations/0005_seed_dj_werk_meetings.sql` — seeds realistic `meeting` items (DJ Werk 2026 sheet) per user; re-runnable.
+  - `supabase/migrations/0006_workstreams_and_activities.sql` — adds the `workstreams` layer and universal Activity fields (`workstream_id`, `source`, `owner`, `value`) on `items`.
+  - `supabase/migrations/0007_seed_real_structure.sql` — seeds the real entity/division/workstream taxonomy + sample activities per user; re-runnable.
 
 Or locally: `supabase db push` from the `pivotos` folder if the Supabase CLI is linked to this project.
 

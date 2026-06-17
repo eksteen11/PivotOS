@@ -8,9 +8,11 @@ export { ALL_ENTITIES_SLUG, isAllEntitiesScope } from '../../lib/appScope'
 
 export type EntityId = string
 export type DivisionId = string
+export type WorkstreamId = string
 
 export type Entity = { id: EntityId; label: string }
 export type Division = { id: DivisionId; label: string }
+export type Workstream = { id: WorkstreamId; label: string; divisionId: DivisionId | null }
 
 const FALLBACK_ENTITIES: Entity[] = [
   { id: 'dj', label: 'DJ Eksteen' },
@@ -22,11 +24,14 @@ const FALLBACK_ENTITIES: Entity[] = [
 type AppState = {
   entities: Entity[]
   divisionsForCurrentEntity: Division[]
+  workstreamsForCurrentScope: Workstream[]
   entityId: EntityId
   currentEntityDbId: string | null
   setEntityId: (id: EntityId) => void
   divisionId: DivisionId | null
   setDivisionId: (id: DivisionId | null) => void
+  workstreamId: WorkstreamId | null
+  setWorkstreamId: (id: WorkstreamId | null) => void
 }
 
 const Ctx = createContext<AppState | null>(null)
@@ -39,6 +44,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const [entityId, setEntityId] = useState<EntityId>('dj')
   const [divisionId, setDivisionId] = useState<DivisionId | null>(null)
+  const [workstreamId, setWorkstreamId] = useState<WorkstreamId | null>(null)
 
   const entities = useMemo(() => {
     return entitiesFromDb && entitiesFromDb.length ? entitiesFromDb : FALLBACK_ENTITIES
@@ -62,18 +68,45 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return [slugToId, bySlug] as const
   }, []) ?? [new Map<string, string>(), new Map<string, Division[]>()]
 
+  const workstreamsByEntitySlug = useLiveQuery(async () => {
+    const rows = await db.workstreams.toArray()
+    const bySlug = new Map<string, Workstream[]>()
+    for (const w of rows) {
+      if (!w.entitySlug) continue
+      const list = bySlug.get(w.entitySlug) ?? []
+      list.push({ id: w.slug, label: w.name, divisionId: w.divisionSlug })
+      bySlug.set(w.entitySlug, list)
+    }
+    for (const [k, list] of bySlug) {
+      bySlug.set(
+        k,
+        list.sort((a, b) => a.label.localeCompare(b.label)),
+      )
+    }
+    return bySlug
+  }, []) ?? new Map<string, Workstream[]>()
+
   const divisionsForCurrentEntity = isAllEntitiesScope(entityId)
     ? []
     : divisionsByEntitySlug.get(entityId) ?? []
+
+  const workstreamsForCurrentScope = useMemo(() => {
+    if (isAllEntitiesScope(entityId)) return []
+    const all = workstreamsByEntitySlug.get(entityId) ?? []
+    if (!divisionId) return all.filter((w) => w.divisionId == null || true)
+    return all.filter((w) => w.divisionId === divisionId)
+  }, [divisionId, entityId, workstreamsByEntitySlug])
 
   const value: AppState = useMemo(
     () => ({
       entities,
       divisionsForCurrentEntity,
+      workstreamsForCurrentScope,
       entityId,
       currentEntityDbId: isAllEntitiesScope(entityId) ? null : entitySlugToDbId.get(entityId) ?? null,
       setEntityId: (id) => {
         setEntityId(id)
+        setWorkstreamId(null)
         if (isAllEntitiesScope(id)) {
           setDivisionId(null)
           return
@@ -85,9 +118,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         })
       },
       divisionId,
-      setDivisionId,
+      setDivisionId: (id) => {
+        setDivisionId(id)
+        setWorkstreamId(null)
+      },
+      workstreamId,
+      setWorkstreamId,
     }),
-    [divisionsByEntitySlug, divisionsForCurrentEntity, entities, entityId, divisionId, entitySlugToDbId],
+    [
+      divisionsByEntitySlug,
+      divisionsForCurrentEntity,
+      workstreamsForCurrentScope,
+      entities,
+      entityId,
+      divisionId,
+      workstreamId,
+      entitySlugToDbId,
+    ],
   )
 
   useEffect(() => {
@@ -112,4 +159,3 @@ export function useAppState() {
   if (!v) throw new Error('useAppState must be used within AppProvider')
   return v
 }
-

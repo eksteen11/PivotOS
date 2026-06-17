@@ -1,14 +1,23 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import { aiBuildDailyPlan, aiCaptureToStructure } from '../../lib/ai/invoke'
 import { hasSupabaseEnv } from '../../lib/supabase/client'
 import { useSupabaseSession } from '../../lib/supabase/useSession'
 import { setTodayPlan } from '../../lib/plan/planRepo'
-import { createPlannedTask, usePlannedTasks, useRecentInboxItems } from '../../lib/items/itemsRepo'
+import {
+  OPPORTUNITY_TYPES,
+  REVENUE_TYPES,
+  createPlannedTask,
+  useActivities,
+  usePlannedTasks,
+  useRecentInboxItems,
+} from '../../lib/items/itemsRepo'
+import { formatZar, isDueToday, isOverdue } from '../../lib/items/activityView'
 import { ALL_ENTITIES_SLUG, useAppState } from '../state/AppState'
 
 export function AgentsPage() {
-  const { entityId, divisionId } = useAppState()
+  const { entityId, divisionId, workstreamId } = useAppState()
   const { session } = useSupabaseSession()
   const inbox = useRecentInboxItems(1, entityId) ?? []
   const latest = inbox[0] ?? null
@@ -21,11 +30,14 @@ export function AgentsPage() {
   return (
     <section>
       <div className="card">
-        <h2 className="cardTitle">Agents</h2>
+        <h2 className="cardTitle">AI Chief of Staff</h2>
         <p className="muted" style={{ margin: 0 }}>
-          Fast AI actions that turn messy inputs into clear execution.
+          Your operational assistant — daily briefing, triage, and fast AI actions.
         </p>
       </div>
+
+      <DailyBriefing scope={{ entityScope: entityId, divisionScope: divisionId, workstreamScope: workstreamId }} />
+
 
       <div className="card">
         <h2 className="cardTitle">Quick actions</h2>
@@ -119,6 +131,72 @@ export function AgentsPage() {
         )}
       </div>
     </section>
+  )
+}
+
+function DailyBriefing({
+  scope,
+}: {
+  scope: { entityScope: string; divisionScope: string | null; workstreamScope: string | null }
+}) {
+  const all = useActivities({ ...scope, limit: 400 }) ?? []
+  const revenue = useActivities({ ...scope, types: REVENUE_TYPES, limit: 200 }) ?? []
+  const opportunities = useActivities({ ...scope, types: OPPORTUNITY_TYPES, limit: 200 }) ?? []
+
+  const open = (x: { status: string }) => x.status !== 'done' && x.status !== 'cancelled'
+  const overdue = all.filter(isOverdue)
+  const today = all.filter(isDueToday)
+  const waiting = all.filter((x) => x.status === 'waiting')
+  const pipeline = revenue.filter(open).reduce((sum, x) => sum + (x.value ?? 0), 0)
+  const topMoney = [...revenue.filter(open)].sort((a, b) => (b.value ?? 0) - (a.value ?? 0)).slice(0, 3)
+
+  const lines = [
+    `${today.length} due today, ${overdue.length} overdue, ${waiting.length} waiting on others.`,
+    `Open pipeline ${formatZar(pipeline)} across ${revenue.filter(open).length} revenue activities.`,
+    `${opportunities.filter(open).length} open opportunities to convert into revenue.`,
+  ]
+
+  return (
+    <div className="card">
+      <h2 className="cardTitle">Daily briefing</h2>
+      <ul style={{ margin: '0 0 14px', paddingLeft: 18, display: 'grid', gap: 6 }}>
+        {lines.map((l) => (
+          <li key={l} style={{ fontSize: 14, fontWeight: 600 }}>
+            {l}
+          </li>
+        ))}
+      </ul>
+      {topMoney.length ? (
+        <>
+          <div className="muted" style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8 }}>
+            What will make money
+          </div>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8 }}>
+            {topMoney.map((m) => (
+              <li
+                key={m.id}
+                style={{
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: 12,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                }}
+              >
+                <span style={{ fontWeight: 800, fontSize: 14 }}>{m.title ?? 'Deal'}</span>
+                <span style={{ fontWeight: 800, fontSize: 13, whiteSpace: 'nowrap' }}>{formatZar(m.value)}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+      <div style={{ height: 12 }} />
+      <Link className="btn secondary" to="/command" style={{ textDecoration: 'none', textAlign: 'center' }}>
+        Open Mission Control
+      </Link>
+    </div>
   )
 }
 

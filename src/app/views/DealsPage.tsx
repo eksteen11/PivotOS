@@ -1,74 +1,58 @@
 import { useMemo, useState } from 'react'
 
+import type { DbItem, ItemStatus } from '../../lib/db/db'
+import { REVENUE_TYPES, setItemStatus, useActivities } from '../../lib/items/itemsRepo'
+import { dueLabel, formatZar, typeLabel } from '../../lib/items/activityView'
 import { ALL_ENTITIES_SLUG, useAppState } from '../state/AppState'
 
-type Stage = 'lead' | 'active' | 'negotiation' | 'won' | 'lost'
-type Deal = {
-  id: string
-  title: string
-  entity: string
-  value: number
-  stage: Stage
-  risk: 'low' | 'medium' | 'high'
-  nextAction: string
-}
+const COLUMNS: { status: ItemStatus; label: string }[] = [
+  { status: 'planned', label: 'Pipeline' },
+  { status: 'in_progress', label: 'Active' },
+  { status: 'waiting', label: 'Waiting' },
+]
 
 export function DealsPage() {
-  const { entities, entityId } = useAppState()
-  const [deals, setDeals] = useState<Deal[]>([
-    {
-      id: crypto.randomUUID(),
-      title: 'Livestock Bulk Sale',
-      entity: 'Digikraal',
-      value: 450000,
-      stage: 'negotiation',
-      risk: 'medium',
-      nextAction: 'Confirm transport pricing and payment terms',
-    },
-    {
-      id: crypto.randomUUID(),
-      title: 'Farm Listing Mandate',
-      entity: 'North Point Realty',
-      value: 1200000,
-      stage: 'active',
-      risk: 'low',
-      nextAction: 'Schedule viewing with top 3 buyers',
-    },
-    {
-      id: crypto.randomUUID(),
-      title: 'Commodity Export Opportunity',
-      entity: 'Farm Feed',
-      value: 900000,
-      stage: 'lead',
-      risk: 'high',
-      nextAction: 'Validate quality specs and buyer terms',
-    },
-  ])
+  const { entities, entityId, divisionId, workstreamId } = useAppState()
+  const deals =
+    useActivities({
+      entityScope: entityId,
+      divisionScope: divisionId,
+      workstreamScope: workstreamId,
+      types: REVENUE_TYPES,
+      limit: 200,
+    }) ?? []
 
-  const entityLabel =
-    entityId === ALL_ENTITIES_SLUG ? 'All entities' : entities.find((e) => e.id === entityId)?.label ?? entityId
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const selected = useMemo(() => deals.find((d) => d.id === selectedId) ?? deals[0] ?? null, [deals, selectedId])
 
-  const byStage = useMemo(() => {
-    const stages: Stage[] = ['lead', 'active', 'negotiation']
-    return stages.map((s) => ({ stage: s, items: deals.filter((d) => d.stage === s) }))
-  }, [deals])
+  const entityLabel =
+    entityId === ALL_ENTITIES_SLUG ? 'All entities' : entities.find((e) => e.id === entityId)?.label ?? entityId
+
+  const openDeals = deals.filter((d) => d.status !== 'done' && d.status !== 'cancelled')
+  const pipelineValue = openDeals.reduce((sum, d) => sum + (d.value ?? 0), 0)
+  const wonValue = deals.filter((d) => d.status === 'done').reduce((sum, d) => sum + (d.value ?? 0), 0)
+
+  const byStatus = COLUMNS.map((c) => ({ ...c, items: deals.filter((d) => d.status === c.status) }))
 
   return (
     <section>
       <div className="card">
-        <h2 className="cardTitle">Deals cockpit</h2>
+        <h2 className="cardTitle">Deals & Revenue</h2>
         <p className="muted" style={{ marginTop: 0 }}>
-          Stage, risk, value, and next best action for {entityLabel}.
+          Stage, value, and next action for {entityLabel}.
         </p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <span className="statusPill">Open {openDeals.length}</span>
+          <span className="statusPill">Pipeline {formatZar(pipelineValue)}</span>
+          <span className="statusPill">Won {formatZar(wonValue)}</span>
+        </div>
       </div>
 
       <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-        {byStage.map((g) => (
-          <div key={g.stage} className="card">
-            <h2 className="cardTitle" style={{ textTransform: 'capitalize' }}>
-              {g.stage} ({g.items.length})
+        {byStatus.map((g) => (
+          <div key={g.status} className="card">
+            <h2 className="cardTitle">
+              {g.label} ({g.items.length})
             </h2>
             {g.items.length === 0 ? (
               <p className="muted" style={{ margin: 0 }}>
@@ -80,7 +64,7 @@ export function DealsPage() {
                   <li
                     key={d.id}
                     style={{
-                      border: '1px solid var(--border)',
+                      border: selected?.id === d.id ? '1px solid var(--accent, #00a85a)' : '1px solid var(--border)',
                       background: 'var(--bg)',
                       borderRadius: 'var(--radius-md)',
                       padding: '16px',
@@ -89,9 +73,9 @@ export function DealsPage() {
                     }}
                     onClick={() => setSelectedId(d.id)}
                   >
-                    <div style={{ fontWeight: 800, fontSize: 14 }}>{d.title}</div>
+                    <div style={{ fontWeight: 800, fontSize: 14 }}>{d.title ?? 'Deal'}</div>
                     <div className="muted" style={{ fontSize: 13, marginTop: 6, fontWeight: 600 }}>
-                      R {d.value.toLocaleString()}
+                      {typeLabel(d.type)} · {formatZar(d.value)}
                     </div>
                   </li>
                 ))}
@@ -105,60 +89,53 @@ export function DealsPage() {
         <h2 className="cardTitle">Selected deal</h2>
         {!selected ? (
           <p className="muted" style={{ margin: 0 }}>
-            Select a deal to view details.
+            No revenue activities yet. Capture a deal or opportunity from Quick Capture.
           </p>
         ) : (
-          <>
-            <div style={{ fontWeight: 800, fontSize: 18 }}>{selected.title}</div>
-            <p className="muted" style={{ marginTop: 4 }}>
-              {selected.entity} · Value R {selected.value.toLocaleString()}
-            </p>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
-              <span className="statusPill">Stage {selected.stage}</span>
-              <span className="statusPill">Risk {selected.risk}</span>
-            </div>
-            <div className="field" style={{ marginBottom: 10 }}>
-              <label>Next best action</label>
-              <input
-                style={{ width: '100%', background: 'transparent', border: 0, outline: 'none', padding: 0 }}
-                value={selected.nextAction}
-                onChange={(e) => {
-                  const v = e.target.value
-                  setDeals((prev) => prev.map((x) => (x.id === selected.id ? { ...x, nextAction: v } : x)))
-                }}
-              />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <button
-                className="btn accent"
-                type="button"
-                onClick={() => {
-                  setDeals((prev) =>
-                    prev.map((x) =>
-                      x.id === selected.id
-                        ? { ...x, stage: x.stage === 'lead' ? 'active' : x.stage === 'active' ? 'negotiation' : 'won' }
-                        : x,
-                    ),
-                  )
-                }}
-              >
-                Advance stage
-              </button>
-              <button
-                className="btn secondary"
-                type="button"
-                style={{ color: 'var(--danger)' }}
-                onClick={() => {
-                  setDeals((prev) => prev.map((x) => (x.id === selected.id ? { ...x, stage: 'lost' } : x)))
-                }}
-              >
-                Mark lost
-              </button>
-            </div>
-          </>
+          <DealDetail deal={selected} />
         )}
       </div>
     </section>
   )
 }
 
+function DealDetail({ deal }: { deal: DbItem }) {
+  const due = dueLabel(deal)
+  return (
+    <>
+      <div style={{ fontWeight: 800, fontSize: 18 }}>{deal.title ?? 'Deal'}</div>
+      <p className="muted" style={{ marginTop: 4 }}>
+        {deal.entitySlug}
+        {deal.workstreamSlug ? ` · ${deal.workstreamSlug}` : ''} · {formatZar(deal.value)}
+      </p>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+        <span className="statusPill">{typeLabel(deal.type)}</span>
+        <span className="statusPill">Status {deal.status}</span>
+        {deal.owner ? <span className="statusPill">{deal.owner}</span> : null}
+        {due ? <span className="statusPill">Due {due}</span> : null}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+        <button
+          className="btn accent"
+          type="button"
+          onClick={async () =>
+            setItemStatus(deal.id, deal.status === 'planned' ? 'in_progress' : 'done')
+          }
+        >
+          {deal.status === 'planned' ? 'Activate' : 'Mark won'}
+        </button>
+        <button className="btn secondary" type="button" onClick={async () => setItemStatus(deal.id, 'waiting')}>
+          Waiting
+        </button>
+        <button
+          className="btn secondary"
+          type="button"
+          style={{ color: 'var(--danger)' }}
+          onClick={async () => setItemStatus(deal.id, 'cancelled')}
+        >
+          Mark lost
+        </button>
+      </div>
+    </>
+  )
+}

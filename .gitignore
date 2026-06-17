@@ -25,3 +25,12 @@ dist-ssr
 
 # TypeScript incremental
 *.tsbuildinfo
+
+# Temp MCP and import files
+.chunk*
+.mcp_*
+.verify-*.png
+scripts/.pydeps/
+supabase/migrations/_import_chunks/
+supabase/migrations/_batches/
+supabase/import_dj_werk_payload.json

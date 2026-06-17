@@ -20,13 +20,27 @@ type RemoteDivision = {
   updated_at: string
 }
 
+type RemoteWorkstream = {
+  id: string
+  entity_id: string
+  division_id: string | null
+  slug: string
+  name: string
+  sort_order: number
+  updated_at: string
+}
+
 type RemoteItem = {
   id: string
   entity_id: string | null
   division_id: string | null
+  workstream_id: string | null
   type: DbItem['type']
   status: DbItem['status']
   priority: number
+  source: DbItem['source'] | null
+  owner: string | null
+  value: number | null
   title: string | null
   content: string
   due_at: string | null
@@ -88,6 +102,29 @@ async function syncEntitiesAndDivisions(_session: Session) {
       updatedAt: d.updated_at ?? now,
     })),
   )
+
+  const { data: workstreams, error: wErr } = await supabase!
+    .from('workstreams')
+    .select('id,entity_id,division_id,slug,name,sort_order,updated_at')
+    .order('sort_order', { ascending: true })
+
+  if (wErr) throw wErr
+
+  const entityRows = entities as RemoteEntity[]
+  const divisionRows = divisions as RemoteDivision[]
+  await db.workstreams.bulkPut(
+    (workstreams as RemoteWorkstream[]).map((w) => ({
+      id: w.id,
+      entityId: w.entity_id,
+      entitySlug: entityRows.find((e) => e.id === w.entity_id)?.slug ?? null,
+      divisionId: w.division_id,
+      divisionSlug: divisionRows.find((d) => d.id === w.division_id)?.slug ?? null,
+      slug: w.slug,
+      name: w.name,
+      sortOrder: w.sort_order ?? 0,
+      updatedAt: w.updated_at ?? now,
+    })),
+  )
 }
 
 async function pushDirtyItems(session: Session) {
@@ -96,6 +133,7 @@ async function pushDirtyItems(session: Session) {
 
   const entities = await db.entities.toArray()
   const divisions = await db.divisions.toArray()
+  const workstreams = await db.workstreams.toArray()
 
   const toRemote = dirty.map((it) => {
     const entity = entities.find((e) => e.slug === it.entitySlug)
@@ -103,20 +141,33 @@ async function pushDirtyItems(session: Session) {
       it.divisionSlug && entity
         ? divisions.find((d) => d.slug === it.divisionSlug && d.entityId === entity.id)
         : null
+    const workstream =
+      it.workstreamSlug && entity
+        ? workstreams.find((w) => w.slug === it.workstreamSlug && w.entityId === entity.id)
+        : null
 
     return {
       id: it.id,
       user_id: session.user.id,
       entity_id: entity?.id ?? null,
       division_id: division?.id ?? null,
+      workstream_id: workstream?.id ?? null,
       type: it.type,
       status: it.status,
       priority: it.priority,
+      source: it.source ?? 'manual',
+      owner: it.owner,
+      value: it.value,
       title: it.title,
       content: it.content,
       due_at: it.dueAt,
       scheduled_blocks: it.scheduledBlocks,
-      meta: { ...it.meta, entity_slug: it.entitySlug, division_slug: it.divisionSlug },
+      meta: {
+        ...it.meta,
+        entity_slug: it.entitySlug,
+        division_slug: it.divisionSlug,
+        workstream_slug: it.workstreamSlug,
+      },
       client_updated_at: it.clientUpdatedAt,
       deleted_at: it.deletedAt,
     }
@@ -141,25 +192,27 @@ function pullCursorKey(userId: string) {
 
 async function pullUpdatedItems(userId: string) {
   const meta = await db.kv.get(pullCursorKey(userId))
-  const lastPullUpdatedAt = (meta?.value as string | undefined) ?? '1970-01-01T00:00:00.000Z'
-
-  const { data, error } = await supabase!
-    .from('items')
-    .select(
-      'id,entity_id,division_id,type,status,priority,title,content,due_at,scheduled_blocks,meta,client_updated_at,updated_at,deleted_at',
-    )
-    .gt('updated_at', lastPullUpdatedAt)
-    .order('updated_at', { ascending: true })
-    .limit(500)
-
-  if (error) throw error
-  const rows = (data ?? []) as RemoteItem[]
-  if (rows.length === 0) return
+  let lastPullUpdatedAt = (meta?.value as string | undefined) ?? '1970-01-01T00:00:00.000Z'
 
   const entities = await db.entities.toArray()
   const divisions = await db.divisions.toArray()
+  const workstreams = await db.workstreams.toArray()
 
-  for (const r of rows) {
+  for (;;) {
+    const { data, error } = await supabase!
+      .from('items')
+      .select(
+        'id,entity_id,division_id,workstream_id,type,status,priority,source,owner,value,title,content,due_at,scheduled_blocks,meta,client_updated_at,updated_at,deleted_at',
+      )
+      .gt('updated_at', lastPullUpdatedAt)
+      .order('updated_at', { ascending: true })
+      .limit(500)
+
+    if (error) throw error
+    const rows = (data ?? []) as RemoteItem[]
+    if (rows.length === 0) break
+
+    for (const r of rows) {
     const local = await db.items.get(r.id)
     if (local?.syncState === 'dirty') continue
 
@@ -171,15 +224,24 @@ async function pullUpdatedItems(userId: string) {
       divisions.find((d) => d.id === r.division_id)?.slug ??
       (typeof r.meta?.division_slug === 'string' ? r.meta.division_slug : null)
 
+    const workstreamSlug =
+      workstreams.find((w) => w.id === r.workstream_id)?.slug ??
+      (typeof r.meta?.workstream_slug === 'string' ? r.meta.workstream_slug : null)
+
     const mapped: DbItem = {
       id: r.id,
       entitySlug,
       divisionSlug,
       entityId: r.entity_id,
       divisionId: r.division_id,
+      workstreamSlug,
+      workstreamId: r.workstream_id ?? null,
       type: r.type,
       status: r.status,
       priority: r.priority ?? 2,
+      source: r.source ?? 'manual',
+      owner: r.owner ?? null,
+      value: typeof r.value === 'number' ? r.value : null,
       title: r.title ?? null,
       content: r.content ?? '',
       dueAt: r.due_at ?? null,
@@ -191,9 +253,12 @@ async function pullUpdatedItems(userId: string) {
       syncState: 'synced',
     }
 
-    await db.items.put(mapped)
-  }
+      await db.items.put(mapped)
+    }
 
-  await db.kv.put({ key: pullCursorKey(userId), value: rows[rows.length - 1]!.updated_at })
+    lastPullUpdatedAt = rows[rows.length - 1]!.updated_at
+    await db.kv.put({ key: pullCursorKey(userId), value: lastPullUpdatedAt })
+    if (rows.length < 500) break
+  }
 }
 

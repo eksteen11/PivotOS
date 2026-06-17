@@ -2,6 +2,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 
 import { useDirtyCount, useLastSyncAt } from '../../lib/sync/syncStatus'
 import { AccountMenu } from './AccountMenu'
+import { QuickCapture } from './QuickCapture'
 import { ALL_ENTITIES_SLUG, useAppState } from '../state/AppState'
 
 function useRouteLabel() {
@@ -23,8 +24,17 @@ function useRouteLabel() {
 
 export function AppLayout() {
   const { title, hint } = useRouteLabel()
-  const { entities, entityId, setEntityId, divisionsForCurrentEntity, divisionId, setDivisionId } =
-    useAppState()
+  const {
+    entities,
+    entityId,
+    setEntityId,
+    divisionsForCurrentEntity,
+    divisionId,
+    setDivisionId,
+    workstreamsForCurrentScope,
+    workstreamId,
+    setWorkstreamId,
+  } = useAppState()
   const dirtyCount = useDirtyCount() ?? 0
   const lastSyncAt = useLastSyncAt()
   const online = typeof navigator !== 'undefined' ? navigator.onLine : true
@@ -76,11 +86,36 @@ export function AppLayout() {
                 {divisionsForCurrentEntity.length === 0 ? (
                   <option value="">—</option>
                 ) : (
-                  divisionsForCurrentEntity.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.label}
-                    </option>
-                  ))
+                  <>
+                    <option value="">All divisions</option>
+                    {divisionsForCurrentEntity.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.label}
+                      </option>
+                    ))}
+                  </>
+                )}
+              </select>
+            </div>
+
+            <div className="field">
+              <label>Workstream</label>
+              <select
+                value={workstreamId ?? ''}
+                onChange={(e) => setWorkstreamId(e.target.value || null)}
+                disabled={workstreamsForCurrentScope.length === 0}
+              >
+                {workstreamsForCurrentScope.length === 0 ? (
+                  <option value="">—</option>
+                ) : (
+                  <>
+                    <option value="">All workstreams</option>
+                    {workstreamsForCurrentScope.map((w) => (
+                      <option key={w.id} value={w.id}>
+                        {w.label}
+                      </option>
+                    ))}
+                  </>
                 )}
               </select>
             </div>
@@ -93,6 +128,8 @@ export function AppLayout() {
           <Outlet />
         </div>
       </main>
+
+      <QuickCapture />
 
       <nav className="bottomNav" aria-label="Primary">
         <div className="bottomNavInner">
@@ -117,4 +154,3 @@ function NavItem({ to, label }: { to: string; label: string }) {
     </>
   )
 }
-

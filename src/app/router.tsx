@@ -3,6 +3,7 @@ import { Navigate, Outlet, createHashRouter } from 'react-router-dom'
 import { AppLayout } from './shell/AppLayout'
 import { AuthGate } from './shell/AuthGate'
 import { MarketingLayout } from './shell/MarketingLayout'
+import { ActivityTimelinePage } from './views/ActivityTimelinePage'
 import { AgentsPage } from './views/AgentsPage'
 import { CommandCentrePage } from './views/CommandCentrePage'
 import { ContactsPage } from './views/ContactsPage'
@@ -46,6 +47,7 @@ export const router = createHashRouter([
           { path: '/deals', element: <DealsPage /> },
           { path: '/documents', element: <DocumentsPage /> },
           { path: '/inbox', element: <InboxPage /> },
+          { path: '/activity', element: <ActivityTimelinePage /> },
           { path: '/library', element: <LibraryPage /> },
           { path: '/meetings', element: <MeetingsPage /> },
           { path: '/agents', element: <AgentsPage /> },

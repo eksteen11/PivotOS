@@ -1,21 +1,36 @@
 import { Link } from 'react-router-dom'
 
-import { usePlannedTasks, useRecentInboxItems } from '../../lib/items/itemsRepo'
+import type { DbItem } from '../../lib/db/db'
+import {
+  ACTION_TYPES,
+  OPERATIONS_TYPES,
+  OPPORTUNITY_TYPES,
+  REVENUE_TYPES,
+  useActivities,
+} from '../../lib/items/itemsRepo'
+import { dueLabel, formatZar, isOverdue, typeLabel } from '../../lib/items/activityView'
 import { ALL_ENTITIES_SLUG, useAppState } from '../state/AppState'
 
 export function CommandCentrePage() {
-  const { entities, entityId } = useAppState()
-  const tasks = usePlannedTasks(50, entityId) ?? []
-  const inbox = useRecentInboxItems(30, entityId) ?? []
+  const { entities, entityId, divisionId, workstreamId } = useAppState()
+  const scope = { entityScope: entityId, divisionScope: divisionId, workstreamScope: workstreamId }
+
+  const all = useActivities({ ...scope, limit: 400 }) ?? []
+  const action = useActivities({ ...scope, types: ACTION_TYPES, limit: 100 }) ?? []
+  const revenue = useActivities({ ...scope, types: REVENUE_TYPES, limit: 100 }) ?? []
+  const operations = useActivities({ ...scope, types: OPERATIONS_TYPES, limit: 100 }) ?? []
+  const opportunity = useActivities({ ...scope, types: OPPORTUNITY_TYPES, limit: 100 }) ?? []
 
   const entityLabel =
     entityId === ALL_ENTITIES_SLUG
       ? 'All entities'
       : entities.find((e) => e.id === entityId)?.label ?? 'Current entity'
-  const urgentTasks = tasks.filter((t) => t.priority >= 3 && t.status !== 'done' && t.status !== 'cancelled')
-  const waitingTasks = tasks.filter((t) => t.status === 'waiting')
-  const inProgress = tasks.filter((t) => t.status === 'in_progress')
-  const dueSoon = tasks.filter((t) => Boolean(t.dueAt))
+
+  const open = (x: DbItem) => x.status !== 'done' && x.status !== 'cancelled'
+  const overdue = all.filter(isOverdue)
+  const waiting = all.filter((x) => x.status === 'waiting')
+  const pipelineValue = revenue.filter(open).reduce((sum, x) => sum + (x.value ?? 0), 0)
+  const openOpportunities = opportunity.filter(open)
 
   return (
     <section>
@@ -23,172 +38,161 @@ export function CommandCentrePage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <div>
             <h2 className="cardTitle" style={{ marginBottom: 6 }}>
-              Global Command Centre
+              Mission Control
             </h2>
             <p className="muted" style={{ margin: 0 }}>
               Focus scope: {entityLabel}
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            <span className="statusPill">Today</span>
-            <span className="statusPill">Revenue Focus</span>
-            <span className="statusPill">AI Assisted</span>
+            <Link className="btn secondary" to="/today" style={{ textDecoration: 'none', width: 'auto', padding: '10px 16px' }}>
+              Today
+            </Link>
+            <Link className="btn secondary" to="/inbox" style={{ textDecoration: 'none', width: 'auto', padding: '10px 16px' }}>
+              Inbox
+            </Link>
+            <Link className="btn secondary" to="/activity" style={{ textDecoration: 'none', width: 'auto', padding: '10px 16px' }}>
+              Timeline
+            </Link>
+            <Link className="btn secondary" to="/agents" style={{ textDecoration: 'none', width: 'auto', padding: '10px 16px' }}>
+              Chief of Staff
+            </Link>
           </div>
-        </div>
-        <div style={{ height: 10 }} />
-        <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr 1fr' }}>
-          <Link className="btn secondary" to="/home" style={{ textDecoration: 'none' }}>
-            Open Landing / Home
-          </Link>
-          <Link
-            className="btn"
-            to="/today"
-            style={{
-              textDecoration: 'none',
-            }}
-          >
-            Open Today View
-          </Link>
         </div>
       </div>
 
       <div className="kpiGrid">
-        <KpiCard label="Urgent tasks" value={urgentTasks.length} tone="danger" to="/today" />
-        <KpiCard label="In progress" value={inProgress.length} tone="ok" to="/today" />
-        <KpiCard label="Waiting on others" value={waitingTasks.length} tone="neutral" to="/today" />
-        <KpiCard label="Inbox to process" value={inbox.length} tone="neutral" to="/inbox" />
+        <KpiCard label="Overdue" value={overdue.length} tone="danger" to="/today" />
+        <KpiCard label="Waiting on others" value={waiting.length} tone="neutral" to="/today" />
+        <KpiCard label="Pipeline value" text={formatZar(pipelineValue)} tone="ok" to="/deals" />
+        <KpiCard label="Open opportunities" value={openOpportunities.length} tone="neutral" to="/deals" />
       </div>
 
-      <div className="card">
-        <h2 className="cardTitle">Next best actions</h2>
-        {urgentTasks.length ? (
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 10 }}>
-            {urgentTasks.slice(0, 5).map((t) => (
-              <li
-                key={t.id}
-                style={{
-                  border: '1px solid rgba(26, 28, 28, 0.12)',
-                  background: 'rgba(255, 255, 255, 0.76)',
-                  borderRadius: 14,
-                  padding: 12,
-                  display: 'grid',
-                  gap: 6,
-                }}
-              >
-                <div style={{ fontWeight: 800, fontSize: 15, letterSpacing: '-0.01em' }}>{t.title ?? 'Task'}</div>
-                <div className="muted" style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Priority {t.priority} {t.dueAt ? `· Due ${new Date(t.dueAt).toLocaleDateString()}` : ''}
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="muted" style={{ margin: 0 }}>
-            No urgent tasks. Move one strategic task to in-progress in Today View.
-          </p>
-        )}
-      </div>
-
-      <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
-        <div className="card">
-          <h2 className="cardTitle">Core module jumps</h2>
-          <p className="muted" style={{ marginTop: 0, marginBottom: 16, fontSize: 14 }}>
-            Jump into key operational areas in one tap.
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <Link className="btn secondary" to="/tasks" style={{ textDecoration: 'none' }}>
-              Tasks
-            </Link>
-            <Link className="btn secondary" to="/meetings" style={{ textDecoration: 'none' }}>
-              Meetings
-            </Link>
-            <Link className="btn secondary" to="/contacts" style={{ textDecoration: 'none' }}>
-              Contacts
-            </Link>
-            <Link className="btn secondary" to="/deals" style={{ textDecoration: 'none' }}>
-              Deals
-            </Link>
-            <Link className="btn secondary" to="/projects" style={{ textDecoration: 'none' }}>
-              Projects
-            </Link>
-            <Link className="btn secondary" to="/documents" style={{ textDecoration: 'none' }}>
-              Documents
-            </Link>
-          </div>
-        </div>
-
-        <div className="card">
-          <h2 className="cardTitle">Landing & How-to</h2>
-          <p className="muted" style={{ marginTop: 0, marginBottom: 16, fontSize: 14 }}>
-            View the public home and product narrative anytime.
-          </p>
-          <Link className="btn secondary" to="/home" style={{ textDecoration: 'none' }}>
-            Open home page
-          </Link>
-        </div>
-
-        <div className="card">
-          <h2 className="cardTitle">Meetings & timeline</h2>
-          <p className="muted" style={{ marginTop: 0, marginBottom: 16, fontSize: 14 }}>
-            Keep calendar and execution aligned.
-          </p>
-          <div style={{ display: 'grid', gap: 12 }}>
-            <Link className="btn" to="/meetings" style={{ textDecoration: 'none' }}>
-              Open meetings
-            </Link>
-            <p className="muted" style={{ margin: 0, fontSize: 13, fontWeight: 700 }}>
-              Planned tasks with due dates: {dueSoon.length}
-            </p>
-          </div>
-        </div>
-
-        <div className="card">
-          <h2 className="cardTitle">Follow-up radar</h2>
-          <p className="muted" style={{ marginTop: 0, marginBottom: 16, fontSize: 14 }}>
-            Process fresh communication into action.
-          </p>
-          <div style={{ display: 'grid', gap: 12 }}>
-            <Link className="btn accent" to="/inbox" style={{ textDecoration: 'none' }}>
-              Process inbox
-            </Link>
-            <Link
-              className="btn secondary"
-              to="/contacts"
-              style={{
-                textDecoration: 'none',
-              }}
-            >
-              Open contacts
-            </Link>
-          </div>
-        </div>
-
-        <div className="card">
-          <h2 className="cardTitle">AI Agent updates</h2>
-          <p className="muted" style={{ marginTop: 0, marginBottom: 16, fontSize: 14 }}>
-            Generate structure, plans, and next actions from your latest inputs.
-          </p>
-          <div style={{ display: 'grid', gap: 12 }}>
-            <Link className="btn" to="/agents" style={{ textDecoration: 'none' }}>
-              Open AI agents
-            </Link>
-            <Link
-              className="btn secondary"
-              to="/deals"
-              style={{
-                textDecoration: 'none',
-              }}
-            >
-              Open deals cockpit
-            </Link>
-          </div>
-        </div>
+      <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
+        <Panel
+          title="Action"
+          subtitle="Tasks, meetings, calls, follow-ups"
+          to="/tasks"
+          items={action.filter(open)}
+          empty="Nothing scheduled. Capture or plan a task."
+        />
+        <Panel
+          title="Revenue"
+          subtitle={`Deals, sales, opportunities · ${formatZar(pipelineValue)}`}
+          to="/deals"
+          items={revenue.filter(open)}
+          showValue
+          empty="No live revenue activities."
+        />
+        <Panel
+          title="Operations"
+          subtitle="Development, finance, admin, projects"
+          to="/projects"
+          items={operations.filter(open)}
+          empty="Operations are clear."
+        />
+        <Panel
+          title="Opportunity"
+          subtitle="Ideas, new ventures, leads, partnerships"
+          to="/deals"
+          items={openOpportunities}
+          showValue
+          empty="Capture an idea to start the pipeline."
+        />
       </div>
     </section>
   )
 }
 
-function KpiCard({ label, value, tone, to }: { label: string; value: number; tone: 'ok' | 'danger' | 'neutral'; to: string }) {
+function Panel({
+  title,
+  subtitle,
+  to,
+  items,
+  empty,
+  showValue,
+}: {
+  title: string
+  subtitle: string
+  to: string
+  items: DbItem[]
+  empty: string
+  showValue?: boolean
+}) {
+  return (
+    <div className="card">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+        <h2 className="cardTitle" style={{ marginBottom: 2 }}>
+          {title}
+        </h2>
+        <span className="statusPill">{items.length}</span>
+      </div>
+      <p className="muted" style={{ marginTop: 0, marginBottom: 14, fontSize: 13 }}>
+        {subtitle}
+      </p>
+      {items.length === 0 ? (
+        <p className="muted" style={{ margin: 0 }}>
+          {empty}
+        </p>
+      ) : (
+        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 8 }}>
+          {items.slice(0, 6).map((x) => {
+            const overdue = isOverdue(x)
+            const due = dueLabel(x)
+            return (
+              <li
+                key={x.id}
+                style={{
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: 12,
+                  display: 'grid',
+                  gap: 6,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'baseline' }}>
+                  <div style={{ fontWeight: 800, fontSize: 14, letterSpacing: '-0.01em' }}>{x.title ?? 'Activity'}</div>
+                  {showValue && x.value != null ? (
+                    <div style={{ fontWeight: 800, fontSize: 13, whiteSpace: 'nowrap' }}>{formatZar(x.value)}</div>
+                  ) : null}
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <span className="statusPill">{typeLabel(x.type)}</span>
+                  <span className="statusPill">{x.entitySlug}</span>
+                  {x.status === 'waiting' ? <span className="statusPill">Waiting</span> : null}
+                  {due ? (
+                    <span className="statusPill" style={overdue ? { color: 'var(--danger)', borderColor: 'var(--danger)' } : {}}>
+                      {overdue ? 'Overdue' : 'Due'} {due}
+                    </span>
+                  ) : null}
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+      <div style={{ height: 12 }} />
+      <Link className="btn secondary" to={to} style={{ textDecoration: 'none', textAlign: 'center' }}>
+        Open {title}
+      </Link>
+    </div>
+  )
+}
+
+function KpiCard({
+  label,
+  value,
+  text,
+  tone,
+  to,
+}: {
+  label: string
+  value?: number
+  text?: string
+  tone: 'ok' | 'danger' | 'neutral'
+  to: string
+}) {
   const toneStyle =
     tone === 'danger'
       ? { borderColor: 'rgba(244, 33, 46, 0.4)', background: 'rgba(244, 33, 46, 0.05)' }
@@ -212,8 +216,9 @@ function KpiCard({ label, value, tone, to }: { label: string; value: number; ton
       <div className="muted" style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
         {label}
       </div>
-      <div style={{ fontSize: 36, fontWeight: 800, lineHeight: 1, letterSpacing: '-0.03em', color: 'var(--text)' }}>{value}</div>
+      <div style={{ fontSize: text ? 26 : 36, fontWeight: 800, lineHeight: 1, letterSpacing: '-0.03em', color: 'var(--text)' }}>
+        {text ?? value ?? 0}
+      </div>
     </Link>
   )
 }
-
