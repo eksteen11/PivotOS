@@ -1,506 +1,254 @@
-# PivotOS Masterplan
+# Pivot OS — Masterplan V3
 
-## Canonical Naming Glossary (Lock)
-Use these labels exactly across all planning and build documents:
+## AI Business Operating System
 
-- **Global Command Centre** (not “command center” or generic “dashboard”)
-- **Today View** (not “Today” when naming a core screen)
-- **Universal Inbox**
-- **Entity Workspace**
-- **Quick Capture**
-- **Command Bar**
-- **AI Agent Workforce**
-- **Automation Builder**
-- **Idea-to-Wealth Engine**
-- **Opportunity Cards**
-- **Revenue Stream Builder**
-- **Approval Centre**
-- **Activity Log**
-- **Audit Log**
-- **Integrations Hub**
-
-Phase naming lock:
-- **Phase 2: Global Command Centre, Today View, Quick Capture**
-- **Phase 7: Opportunity Cards + Idea-to-Wealth Engine**
-
-## 1) Executive Summary
-PivotOS is an AI-powered Business Operating System that helps an entrepreneur run personal life, multiple companies, teams, deals, operations, communication, documents, automations, and wealth opportunities from one Command Centre.
-
-This is not a generic task app. It is a decision and execution system designed to reduce cognitive load, protect focus, improve follow-through, and increase revenue outcomes.
-
-Primary architecture direction:
-- Frontend: **Next.js + Tailwind CSS** (best long-term SaaS architecture for scale, routing, SEO pages, docs pages, and app shell)
-- Backend: **Supabase** (Auth, Postgres, Storage, Edge Functions, Realtime)
-- UX mode: **Mobile-first PWA, desktop-powerful, offline-first with sync**
+**Version:** 3.0  
+**Status:** Active build  
+**Stack:** Next.js · TypeScript · Tailwind CSS · Supabase · OpenAI-ready
 
 ---
 
-## 2) Product Vision
-PivotOS becomes:
-- a universal Global Command Centre across entities
-- an AI workforce layer, not an AI gimmick
-- a privacy-safe multi-entity platform
-- an opportunity intelligence system
-- an automation engine with human approval controls
+## 0. Executive Summary
 
-North star: open app -> instantly know what matters now, what makes money now, what is blocked, and what AI can do safely.
+Pivot OS is an **AI Business Operating System** where users create companies, departments, processes, AI agents, and connected tools. The system operates like a **virtual company with digital employees**.
 
----
+**This is not a CRM.** It is a runtime for running companies through AI workers with human oversight.
 
-## 3) Core Philosophy
-- **Clarity over complexity**: cards first, dense data only on demand.
-- **Action over organization**: every screen drives decisions and next actions.
-- **Entity separation by default**: no accidental cross-company leakage.
-- **AI as worker layer**: draft, summarize, classify, suggest, escalate.
-- **Human approval for risk**: no high-risk autonomous actions.
-- **Mobile excellence first**: phenomenal on mobile, strong on desktop.
+**North star:** Open the app → within 3 seconds know what to do today, what needs approval, what agents are running, and what is blocked.
 
----
+**Core chain:**
 
-## 4) Target Users
-- Founder-operators running multiple entities
-- Entrepreneurs with mixed personal + business responsibilities
-- Small teams inside separate companies/business units
-- Operations-heavy users (deals, logistics, finance, follow-up)
-- Revenue-focused users who need execution support, not admin burden
-
----
-
-## 5) Main Problems Solved
-- Fragmented tools and context switching
-- Missed follow-ups and lost opportunities
-- No single truth for tasks, meetings, deals, and money movement
-- Weak prioritization (urgent vs important vs revenue-critical)
-- Poor visibility across entities/divisions
-- Manual repetitive admin with no automation intelligence
-
----
-
-## 6) Main User Journeys
-1. **Morning War Room**
-   - Open Global Command Centre -> see top priorities, risks, meetings, money actions -> execute.
-2. **Universal Inbox Processing**
-   - Pull items from channels -> classify -> convert to tasks/deals/follow-ups/automations.
-3. **Entity Ops Loop**
-   - Switch entity -> monitor dashboard -> run meetings/deals/tasks/logistics -> close loops.
-4. **Idea-to-Wealth Engine**
-   - Capture idea -> score opportunity -> choose first 3 actions -> launch MVP path.
-5. **Delegation and Team Control**
-   - Invite team per entity -> assign tasks/approvals -> track execution safely.
-
----
-
-## 7) Full Feature List
-- Global Command Centre
-- Entity switcher + All Entities mode
-- Entity workspaces (dashboard + modules)
-- Universal Inbox
-- Today View
-- Command bar
-- Quick capture (text/voice/file/screenshot)
-- Tasks, Meetings, Calendar, Notes, Documents
-- Contacts/CRM, Projects, Deals
-- Finance basics, assets, reports
-- Automations + approvals
-- AI agents panel + outputs
-- Opportunity cards + Revenue Stream Builder
-- Integrations hub + sync health
-- Activity + audit logs
-- Landing page + product marketing pages + how-to pages
-
----
-
-## 8) App Navigation Structure
-- **Global top layer**
-  - Global Command Centre
-  - Today View
-  - Universal Inbox
-  - Search/Command bar
-- **Entity layer**
-  - Dashboard, Tasks, Meetings, Calendar, Contacts, Deals, Finance, Documents, Reports, Automations, AI Agents, Settings
-- **Special layer**
-  - Idea-to-Wealth Engine
-  - Revenue Stream Builder
-  - Integrations
-  - Admin/Permissions
-
----
-
-## 9) Entity/Workspace System
-- Entity types: Personal, Company, Project Venture, Brand
-- Each entity has:
-  - users, roles, permissions
-  - modules and settings
-  - own records (tasks, meetings, deals, docs, financial objects)
-  - own integrations and automations
-- Super admin can access entities where membership permits
-- All entities mode is a filtered meta-view, not a data-merge override
-
----
-
-## 10) Core Modules
-- Dashboard
-- Universal Inbox
-- Today View
-- Tasks
-- Meetings
-- Calendar
-- Notes
-- Documents
-- Contacts
-- Projects
-- Deals
-- Finance
-- Assets
-- Reports
-- Automations
-- AI Agents
-- Settings
-
----
-
-## 11) Business-Specific Modules
-- Property
-- Livestock
-- Farm Feed/Commodities
-- Inventory/Stock
-- Logistics
-- Development/Tickets
-- Marketing
-- Legal/Contracts
-- Website/Platform Management
-- Social Media
-- Idea-to-Wealth Engine
-- Revenue Stream Builder
-
----
-
-## 12) AI Agent Workforce
-Planned agent roster (18):
-- Chief of Staff
-- WhatsApp Follow-Up
-- Email Triage
-- Deal Intelligence
-- Wealth Ideas
-- Content Repurposing
-- Property Agent
-- Digikraal Livestock Agent
-- Farm Feed Commodity Agent
-- Finance Admin Agent
-- Meeting Agent
-- Development Agent
-- Document Agent
-- Opportunity Radar
-- Automation Builder
-- Relationship Intelligence
-- Revenue Stream Builder Agent
-- Business Health Agent
-
-Agent model principles:
-- explicit scopes
-- per-entity data boundaries
-- action vs suggestion permissions
-- approval gating
-- full action/audit logs
-
----
-
-## 13) Universal Inbox
-Sources:
-- WhatsApp, Gmail, Calendar, Contacts, Drive/Docs/Sheets, Airtable, websites, social channels, Jira/Confluence, manual capture
-
-Inbox actions:
-- classify, assign entity/division
-- convert to task/meeting/deal/contact/document/opportunity/automation
-- summarize, draft reply, snooze, mark waiting/urgent, archive
-
-Inbox objective:
-- one intake lane before records become structured work.
-
----
-
-## 14) Idea-to-Wealth Engine
-- Idea Inbox -> Opportunity Cards -> Ranked Ventures -> MVP Planner -> Revenue Dashboard
-- Opportunity Card fields:
-  - idea, entity, customer, problem, revenue model, launch speed, difficulty, startup cost, monthly upside, risk, first actions, AI MVP plan, decision
-- Scoring model:
-  - fastest path to cash
-  - lowest effort
-  - highest upside
-  - best asset fit
-  - easiest automation potential
-
----
-
-## 15) Automation Layer
-Automation structure:
-- Trigger -> Condition -> Action -> Approval rule -> Notification -> Audit log
-
-Example automations:
-- meeting ended -> summarize + create follow-up tasks
-- overdue task -> escalate
-- deal stage changed -> create next checklist
-- unpaid invoice -> notify responsible owner
-- lead not followed up in 24h -> draft follow-up for approval
-
----
-
-## 16) Connected Ecosystem & Integration Strategy
-Phased strategy:
-- **Phase 1**: Manual import/link + placeholders
-- **Phase 2**: Zapier/Make/n8n + webhook/API adapters
-- **Phase 3**: Native deep integrations
-- **Phase 4**: AI-assisted autonomous workflows (approval-gated)
-
-Priority integrations:
-- WhatsApp, Gmail, Google Calendar, Google Contacts, Google Drive/Docs/Sheets
-- Airtable (Digikraal + Farm Feed)
-- Propverse + Property24 (manual first)
-- Jira + Confluence
-- websites lead capture
-
----
-
-## 17) Database Schema Plan (Supabase)
-High-level domain groups and primary entities:
-
-| Domain | Tables (planned) |
-|---|---|
-| Identity & Access | users, entities, entity_members, roles, permissions |
-| Workspace Config | modules, module_settings, integrations, integration_accounts |
-| Work Core | inbox_items, tasks, meetings, projects, notes, documents |
-| CRM & Deals | contacts, companies, deals, deal_stages, activity_logs |
-| Vertical Ops | properties, livestock_listings, commodity_listings, logistics_jobs, inventory |
-| Finance | purchases, sales, expenses, invoices, payments, assets |
-| AI Layer | ai_agents, ai_threads, ai_actions, ai_memory |
-| Automation | automations, automation_runs, approvals, notifications |
-| Intelligence | opportunity_cards, revenue_streams, business_health_scores |
-| Compliance | audit_logs |
-
-Schema rules:
-- every business table has `entity_id`
-- critical records include owner and status lifecycles
-- immutable audit trail for sensitive operations
-
----
-
-## 18) Supabase RLS/Security Plan
-- Entity-level isolation via `entity_members` membership checks
-- Role-driven permissions (`owner/admin/member/viewer/custom`)
-- Row access requires active membership to `entity_id`
-- Cross-entity reads blocked by default
-- Integration tokens encrypted and scoped per entity
-- AI actions logged; high-risk actions require approvals
-- Storage buckets and paths scoped by entity/user permissions
-- Immutable audit logs for invites, permissions, financial edits, final deal changes
-
----
-
-## 19) UX/UI Design Direction
-Style:
-- premium, calm, modern SaaS
-- green/black/white accent system
-- soft gradients, rounded modular cards, clean status pills
-
-Stitch inspiration source for implementation:
-- Imported local references from:
-  - `design/stitch/base`
-  - `design/stitch/variant1`
-  - `design/stitch/variant2`
-  - `design/stitch/variant3`
-- Token direction extracted:
-  - Font family: **Manrope**
-  - Base spacing rhythm: **8px scale**
-  - Radius system: **8/12/16px**
-  - Palette anchor: **Primary green** + **secondary blue** + clean neutral surfaces
-  - Layout style: **card-first**, soft shadows, subtle borders, clear status chips
-
-Interaction principles:
-- command bar always available
-- quick capture globally accessible
-- progressive disclosure
-- card-first layouts with switchable views (table/kanban/calendar/timeline)
-
-Brand feel:
-- trusted professional operating console
-- high clarity under pressure
-
----
-
-## 20) Page-by-Page Breakdown
-Core pages:
-- Landing
-- Login/Register
-- Onboarding
-- Create Entity
-- Invite Team
-- Global Command Centre
-- Today View
-- Universal Inbox
-- Entity Dashboard
-- Tasks
-- Meetings
-- Calendar
-- Projects
-- Contacts/CRM
-- Deals
-- Property
-- Livestock
-- Farm Feed Commodities
-- Finance
-- Documents
-- Reports
-- Automations
-- AI Agents
-- Idea-to-Wealth Engine
-- Revenue Stream Builder
-- Integrations
-- Settings
-- Admin/Permissions
-
-Each page spec must include:
-- purpose, components, actions, AI assist, empty states, mobile behavior, required data
-
----
-
-## 21) Module-by-Module Breakdown
-For each module, define:
-- primary jobs-to-be-done
-- main data objects and statuses
-- key user actions
-- AI augmentations
-- automation touchpoints
-- role restrictions
-- KPI indicators
-
-Initial module priorities:
-- Global Command Centre, Today View, Universal Inbox, Tasks, Meetings, Deals, Contacts, Opportunity Cards
-
----
-
-## 22) MVP Definition
-MVP includes:
-- login/auth
-- entity switcher + role-based access
-- Global Command Centre
-- Universal Inbox
-- quick capture
-- tasks
-- meetings
-- contacts
-- deals
-- opportunity cards
-- AI assistant placeholder
-- manual integration records
-- calendar and WhatsApp/Gmail draft placeholders
-- approvals placeholder
-- activity log baseline
-
-MVP excludes deep native integrations initially.
-
----
-
-## 23) Development Phases
-- Phase 0: product clarity + UX architecture + schema planning
-- Phase 1: auth, entities, roles, permissions, base RLS
-- Phase 2: Global Command Centre, Today View, Quick Capture
-- Phase 3: inbox, tasks, meetings, projects, notes
-- Phase 4: contacts, CRM, deals, activity logs
-- Phase 5: docs/files/reports
-- Phase 6: finance basics + assets
-- Phase 7: Opportunity Cards + Idea-to-Wealth Engine
-- Phase 8: integration registry/manual connectors
-- Phase 9: Google Workspace integration
-- Phase 10: Airtable sync
-- Phase 11: WhatsApp integration + draft replies
-- Phase 12: website lead capture
-- Phase 13: property workflows
-- Phase 14: social content engine
-- Phase 15: Jira/Confluence integration
-- Phase 16: accounting/payment integrations
-- Phase 17: advanced AI agent automation
-- Phase 18: polish, performance, deployment
-
----
-
-## 24) Revenue Model for PivotOS
-- Free personal tier
-- Pro entrepreneur tier
-- Team/business tier
-- AI agent credits
-- WhatsApp automation add-on
-- CRM add-on
-- vertical editions (property/farming/trading)
-- white-label + setup/consulting packages
-- automation/template marketplace
-
----
-
-## 25) Future AI Automation Roadmap
-- Stage A: AI assistant + summaries + draft generation
-- Stage B: recommendation system (next best action, risk alerts)
-- Stage C: guided automations with approvals
-- Stage D: semi-autonomous agent workflows with strict guardrails
-- Stage E: multi-agent orchestration and business health optimization
-
----
-
-## 26) Cursor Build Instructions
-- Build in strict phases; do not skip security foundation
-- Keep migrations incremental and reversible
-- Validate RLS per phase with explicit test cases
-- Build mobile-first UI before desktop polish
-- Keep AI actions approval-gated by default
-- Add observability early (activity + audit logs)
-- Document assumptions per phase in markdown artifacts
-- Enforce `DESIGN_RULES.md` on every UI and UX change (mandatory)
-
----
-
-## 27) Questions Still Needed Before Coding
-1. Final initial role set (recommended MVP: owner/admin/member/viewer)?
-2. First two entities for end-to-end test (recommended: Personal + Digikraal)?
-3. Primary MVP market: only your internal use first, or external SaaS users from day one?
-4. First high-value integration after MVP placeholder (recommended: Google Calendar, then Gmail)?
-5. WhatsApp path: official Business API provider choice for production?
-
----
-
-## Architecture Diagram (Text)
-```mermaid
-flowchart TD
-  user[User] --> auth[SupabaseAuth]
-  auth --> app[PivotOSApp]
-  app --> command[GlobalCommandCentre]
-  app --> entity[EntityWorkspace]
-  app --> inbox[UniversalInbox]
-  app --> today[TodayView]
-  app --> agents[AIAgentLayer]
-  app --> automations[AutomationEngine]
-  app --> integrations[IntegrationHub]
-
-  integrations --> ext[ExternalAppsAndWebsites]
-  agents --> approvals[ApprovalSystem]
-  automations --> approvals
-  approvals --> audit[AuditLogs]
-
-  app --> db[SupabasePostgres]
-  app --> storage[SupabaseStorage]
-  db --> rls[EntityRLS]
-  rls --> memberships[EntityMemberships]
+```
+Universal Inbox → Process Engine → AI Agent → Tool Access → Human Approval → Execution Log → Memory
 ```
 
-## Mobile + PWA + Offline Requirements
-- Installable PWA with home screen behavior and offline shell
-- Offline-first for critical flows: capture, tasks, meetings, notes, inbox triage
-- Sync queue with conflict strategy and retry policies
-- Clear sync indicators: pending, synced, failed, requires attention
-- Mobile thumb-first UX, fast-load cards, reduced motion options
+---
 
-## Landing and Help Surface Requirements
-- Premium marketing landing page explaining PivotOS value
-- Segment sub-pages (entrepreneur/team/property/farming/agent workflows)
-- How-it-works and onboarding guides
-- Integration capability pages
-- AI safety and approvals page
-- Documentation centre with practical how-to workflows
+## 1. Core Idea
+
+| Layer | Owner |
+|---|---|
+| Companies | Humans |
+| Departments | Companies |
+| Processes | Departments |
+| Execution | AI Agents |
+| External actions | Tools (approved APIs) |
+| Risk | Human approvals |
+| Truth | Logs + memory |
+
+---
+
+## 2. Canonical Glossary
+
+| Term | Definition |
+|---|---|
+| **Entity / Company** | Legal or logical business unit (Digikraal, Farm Feed, Northpoint, Pivot OS, DJ Eksteen) |
+| **Department** | Functional unit inside an entity (maps to `divisions` in DB) |
+| **Workstream** | Optional execution lane under department (82 seeded from DJ Werk import) |
+| **Process** | Repeatable business workflow with steps |
+| **Agent** | Digital employee with role, tools, and approval rules |
+| **Tool** | External capability (Gmail, Xero, WhatsApp, etc.) |
+| **Approval** | Human gate before sensitive agent action |
+| **Memory** | Durable context for agents |
+| **Activity Log** | Immutable execution trail |
+| **Universal Inbox** | Single intake for all incoming work |
+| **Today** | Command centre — only what matters today |
+
+---
+
+## 3. Product Modules (MVP)
+
+### 3.1 Universal Inbox
+- All incoming items land here
+- Types: email, WhatsApp, document, voice note, meeting, manual note, form lead
+- Classify by: entity, department, process, urgency, suggested agent
+- UI: big-card deck, not dense lists
+
+### 3.2 Today Command Centre
+- Urgent approvals
+- Active processes
+- Overdue tasks
+- Agent recommendations
+- Blocked work
+- Important incoming items
+
+### 3.3 Process Engine
+- Every inbox item becomes or attaches to a process
+- Templates: Lead, Quote, Legal, Finance, Follow-up, Listing, Document review
+- Fields: title, entity, department, status, steps, assigned agent, human owner, deadline, history
+- UI: kanban board with step progress
+
+### 3.4 AI Agent Registry
+- Agents stored in database, not hardcoded
+- Fields: name, entity, department, role, job description, responsibilities, allowed tools, approval rules, memory scope, supervisor, escalation, status
+
+### 3.5 Agent Factory
+- Create agents without code
+- Wizard: name → entity/dept → role → tools → permissions → memory → activate
+- Suggestion engine: pattern detection → "Create Debtors Agent?"
+
+### 3.6 Tool Connection Centre
+- Connect Gmail, Calendar, Drive, WhatsApp, Xero, Sage, HubSpot, Airtable, Property24, Webhooks, Custom API
+- OAuth-ready; MVP uses placeholders when keys absent
+- Credentials server-side only
+
+### 3.7 Tool Permission System
+- Levels: `none` | `read` | `draft` | `execute_with_approval` | `execute_auto`
+- Agents may only use permitted tools
+
+### 3.8 Approval Centre
+- Required for: send email/WhatsApp, payments, deletes, signing, new agents, tool grants, settings changes
+- Card: agent, action, reason, data, risk, approve/edit/reject
+
+### 3.9 Memory Layer
+- Postgres tables now; pgvector later
+- Kinds: contact, preference, decision, process_history, document_summary, pattern, performance
+
+---
+
+## 4. Navigation (5 primary + More)
+
+1. **Today** — command centre
+2. **Inbox** — universal intake
+3. **Processes** — workflow board
+4. **Agents** — registry + factory
+5. **More** — Tools, Approvals, Settings
+
+---
+
+## 5. Object Model
+
+```
+User → Entity → Department → Process → Steps
+                    ↓
+              Agent → Tools (permissioned) → Approval → Log → Memory
+```
+
+| Object | Table | Notes |
+|---|---|---|
+| User | `auth.users` | Supabase Auth |
+| Entity | `entities` | Keep |
+| Department | `divisions` | Rename in UX only |
+| Workstream | `workstreams` | Keep for import compatibility |
+| Process | `processes` | New |
+| Process step | `process_steps` | New |
+| Agent | `agents` | New |
+| Tool catalog | `tools` | New |
+| Tool connection | `tool_connections` | New |
+| Agent tool grant | `agent_tools` | New |
+| Task / activity | `items` | Universal substrate — keep |
+| Approval | `approvals` | New |
+| Memory | `memories` | New |
+| Log | `activity_logs` | New |
+| Document | `documents` | New |
+| Contact | `contacts` | New (+ `items.type=contact`) |
+
+---
+
+## 6. Tech Stack
+
+| Layer | Choice |
+|---|---|
+| Frontend | Next.js App Router, TypeScript, Tailwind CSS |
+| Backend | Supabase (Auth, Postgres, Storage, Edge Functions) |
+| Offline | Dexie in client components (optional cache) |
+| AI | OpenAI via Edge Functions |
+| Deploy | Vercel + Supabase |
+
+**Why Next.js:** OAuth callbacks, webhooks, server-side tool execution, middleware auth, marketing + app in one product.
+
+---
+
+## 7. Database Migrations
+
+| Migration | Purpose |
+|---|---|
+| 0001–0009 | Core entities, items, workstreams, RLS fix |
+| 0010 | Pivot OS core: processes, agents, tools, approvals, memories, logs |
+| 0011 | Demo seed: agents, tools, processes, approvals |
+
+---
+
+## 8. UX Law
+
+- Apple + Linear + Notion, but simpler
+- Big clean decks, not dense dashboards
+- Max 5 primary nav items
+- One main action per card
+- Calm, executive, spacious
+- Status badges: `urgent`, `waiting`, `blocked`, `needs_approval`, `agent_active`
+
+---
+
+## 9. Phased Roadmap
+
+### Phase 0 — Foundation (current)
+- MASTERPLAN V3, migration 0010/0011, Next.js shell, design system, demo seed
+
+### Phase 1 — Today + Inbox
+- Today Command Centre, Inbox card UI, classification, inbox → process spawn
+
+### Phase 2 — Process Engine
+- Process board, step runner, templates
+
+### Phase 3 — Agent Registry + Factory
+- Directory, wizard, suggestions
+
+### Phase 4 — Tools + Permissions
+- Connection centre, permission matrix, mock execution
+
+### Phase 5 — Approval Centre
+- Queue, approve/edit/reject, wire to logs
+
+### Phase 6 — Memory + Logs
+- Memory CRUD, activity timeline, agent context
+
+### Phase 7 — Real Integrations
+- Gmail, Calendar, WhatsApp, Xero OAuth; pgvector memory
+
+---
+
+## 10. MVP Demo Behaviour
+
+Without real API keys:
+1. Inbox shows seeded WhatsApp + email items
+2. Classify → spawns Lead process on Digikraal
+3. Sales Agent proposes email → Approval created
+4. Approve on Today → mock send logged
+5. Agent Factory suggests Debtors Agent
+6. Tools page shows Connect placeholders
+
+---
+
+## 11. Success Metrics
+
+- Time-to-clarity on Today: < 3 seconds
+- Inbox → classified process: < 30 seconds
+- Agent action → approval → log: fully traceable
+- Zero silent sync failures
+- Entity scope never leaks (RLS verified)
+
+---
+
+## 12. Seed Agents
+
+CEO Agent, Executive Assistant, Sales Agent, Finance Agent, Legal Agent, Marketing Agent, Operations Agent, Listing Agent, Farm Feed Quote Agent, Digikraal Livestock Agent, Northpoint Property Agent
+
+---
+
+## 13. Migration from Vite PWA
+
+| Legacy | V3 |
+|---|---|
+| `src/app/views/CommandCentrePage` | `app/(app)/today` |
+| `src/app/views/InboxPage` | `app/(app)/inbox` |
+| `src/app/views/AgentsPage` | `app/(app)/agents` |
+| `divisions` | Departments (UX label) |
+| `items` | Keep as activity stream |
+| Vite hash router | Next.js App Router |
+
+Legacy Vite app remains under `src/` until feature parity; primary dev: `npm run dev` (Next.js).
+
+---
+
+*Pivot OS V3 — run companies through AI workers.*

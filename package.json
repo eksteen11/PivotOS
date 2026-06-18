@@ -4,18 +4,26 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "dev": "next dev",
+    "dev:vite": "vite",
+    "build": "next build",
+    "build:vite": "tsc -b && vite build",
+    "start": "next start",
+    "lint": "eslint ."
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.104.0",
+    "autoprefixer": "^10.5.0",
+    "clsx": "^2.1.1",
     "dexie": "^4.4.2",
     "dexie-react-hooks": "^4.4.0",
+    "next": "^15.5.19",
+    "postcss": "^8.5.15",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.14.1",
+    "tailwindcss": "^3.4.19",
     "vite-plugin-pwa": "^1.2.0"
   },
   "devDependencies": {

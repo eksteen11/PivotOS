@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+  body {
+    @apply bg-surface text-ink font-sans;
+  }
+}
+
+@layer components {
+  .deck-card {
+    @apply rounded-2xl bg-white border border-black/5 shadow-deck p-6;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-teal-700 transition;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm font-medium text-ink hover:bg-black/5 transition;
+  }
+  .field-input {
+    @apply w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/20;
+  }
+}

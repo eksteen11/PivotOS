@@ -1,4 +1,24 @@
-# Supabase setup (PivotOS V1)
+# Supabase setup (PivotOS)
+
+## Pivot OS V3
+
+Primary app: **Next.js** (`npm run dev` → http://localhost:3000)
+
+Legacy Vite PWA remains under `src/` (`npm run dev:vite`).
+
+### Latest migrations
+
+- `0010_pivot_os_core.sql` — agents, processes, tools, approvals, memory, logs
+- `0011_seed_pivot_os_demo.sql` — demo agents, tools, processes, approvals
+
+### Env
+
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+```
+
+---
 
 ## 1) Create project
 - Create a Supabase project (any name) and keep it in the same region you prefer.
