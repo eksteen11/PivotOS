@@ -1,4 +1,4 @@
-import { AgentFactoryWizard } from '@/components/agents/AgentFactoryWizard'
+import { AgentFactoryShell } from '@/components/agents/AgentFactoryShell'
 import { getEntities, getMemories } from '@/lib/data/queries'
 
 export default async function NewAgentPage({
@@ -25,7 +25,7 @@ export default async function NewAgentPage({
         <h1 className="text-2xl font-bold tracking-tight">Agent Factory</h1>
         <p className="mt-1 text-muted">Create a new digital employee without code.</p>
       </div>
-      <AgentFactoryWizard entities={entities} suggestion={suggestion} />
+      <AgentFactoryShell entities={entities} suggestion={suggestion} />
     </section>
   )
 }

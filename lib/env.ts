@@ -5,3 +5,7 @@ export const supabaseAnonKey =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_KEY ?? ''
 
 export const hasSupabaseEnv = Boolean(supabaseUrl && supabaseAnonKey)
+
+export const openaiApiKey = process.env.OPENAI_API_KEY ?? ''
+export const openaiModel = process.env.OPENAI_MODEL ?? 'gpt-4o-mini'
+export const hasOpenaiEnv = Boolean(openaiApiKey)

@@ -1,16 +1,19 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
+import type { GeneratedAgent } from '@/lib/ai/generateAgent'
 import type { Entity } from '@/lib/types/database'
 
 type Props = {
   entities: Entity[]
   suggestion?: { title: string; description: string; preset?: { name: string; role: string; slug: string } }
+  aiDraft?: GeneratedAgent | null
+  onClearAi?: () => void
 }
 
-export function AgentFactoryWizard({ entities, suggestion }: Props) {
+export function AgentFactoryWizard({ entities, suggestion, aiDraft, onClearAi }: Props) {
   const router = useRouter()
   const [name, setName] = useState(suggestion?.preset?.name ?? '')
   const [role, setRole] = useState(suggestion?.preset?.role ?? '')
@@ -19,6 +22,14 @@ export function AgentFactoryWizard({ entities, suggestion }: Props) {
   const [jobDescription, setJobDescription] = useState(suggestion?.description ?? '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!aiDraft) return
+    setName(aiDraft.name)
+    setRole(aiDraft.role)
+    setSlug(aiDraft.slug)
+    setJobDescription(aiDraft.job_description)
+  }, [aiDraft])
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -38,9 +49,11 @@ export function AgentFactoryWizard({ entities, suggestion }: Props) {
     })
     setBusy(false)
     if (!res.ok) {
-      setError(await res.text())
+      const data = await res.json().catch(() => ({}))
+      setError(data.error ?? 'Failed to create agent')
       return
     }
+    onClearAi?.()
     router.push('/agents')
     router.refresh()
   }
@@ -75,7 +88,7 @@ export function AgentFactoryWizard({ entities, suggestion }: Props) {
         <textarea className="field-input mt-1 min-h-[100px]" value={jobDescription} onChange={(e) => setJobDescription(e.target.value)} />
       </div>
       {error ? <p className="text-sm text-danger">{error}</p> : null}
-      <button type="submit" className="btn-primary" disabled={busy}>{busy ? 'Creating…' : 'Activate agent'}</button>
+      <button type="submit" className="btn-primary mb-4" disabled={busy}>{busy ? 'Creating…' : 'Activate agent'}</button>
     </form>
   )
 }
