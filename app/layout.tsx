@@ -1,14 +1,11 @@
-import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 
+import { siteMetadata } from './site-metadata'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
-export const metadata: Metadata = {
-  title: 'Pivot OS',
-  description: 'AI Business Operating System',
-}
+export const metadata = siteMetadata
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
