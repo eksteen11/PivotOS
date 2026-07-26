@@ -1166,6 +1166,239 @@ button, input, select, textarea {
   color: rgba(255, 255, 255, 0.72);
 }
 
+/* ClickUp-inspired marketing blocks */
+.marketingHeroClickUp .heroTitle {
+  max-width: 100%;
+}
+
+.marketingHeroClickUp .heroTitleMuted {
+  color: rgba(26, 28, 28, 0.42);
+}
+
+.marketingCheckList {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+  max-width: 640px;
+}
+
+.marketingCheckList li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.marketingCheckIcon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #059669;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.marketingHeroNote {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.marketingCtaDark {
+  background: var(--text) !important;
+  color: #fff !important;
+  border-color: var(--text) !important;
+  border-radius: 16px !important;
+  padding: 14px 28px !important;
+  font-size: 16px !important;
+}
+
+.marketingModuleGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #fff;
+}
+
+.marketingModuleTile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 16px;
+  text-align: center;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: #fff;
+  transition: background 0.15s;
+}
+
+.marketingModuleTile:hover {
+  background: #f8faf9;
+}
+
+.marketingModuleIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #fff;
+  font-weight: 800;
+}
+
+.marketingModuleName {
+  font-size: 13px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.marketingModuleBadge {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0, 214, 118, 0.15);
+  color: #047857;
+}
+
+.marketingModuleDesc {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.marketingCapabilityCloud {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 28px;
+}
+
+.marketingCapabilityPill {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #f8faf9;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(26, 28, 28, 0.72);
+}
+
+.marketingVerticalGrid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  margin-top: 28px;
+}
+
+.marketingVerticalCard {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: #f8faf9;
+  padding: 28px;
+}
+
+.marketingVerticalTitle {
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+}
+
+.marketingVerticalLead {
+  margin: 0 0 16px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.marketingReplacesLabel {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+
+.marketingReplacesRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.marketingReplacesPill {
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(26, 28, 28, 0.55);
+}
+
+.marketingAgentPill {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(0, 214, 118, 0.12);
+  font-size: 11px;
+  font-weight: 800;
+  color: #047857;
+}
+
+.marketingBrainGrid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  margin-top: 28px;
+}
+
+.marketingBrainCard {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: #fff;
+  padding: 22px;
+  box-shadow: var(--shadow-sm);
+}
+
+.marketingBrainCard h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.marketingBrainCard p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
 .howGrid {
   display: grid;
   gap: 16px;

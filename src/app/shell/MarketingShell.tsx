@@ -35,14 +35,14 @@ export function MarketingShell({ children }: Props) {
             <button type="button" className="marketingNavLink" onClick={() => scrollToSection('marketing-product')}>
               Product
             </button>
-            <button type="button" className="marketingNavLink" onClick={() => scrollToSection('marketing-entities')}>
-              Entities
-            </button>
             <button type="button" className="marketingNavLink" onClick={() => scrollToSection('marketing-ai')}>
               AI
             </button>
-            <button type="button" className="marketingNavLink" onClick={() => scrollToSection('marketing-meetings')}>
-              Meetings
+            <button type="button" className="marketingNavLink" onClick={() => scrollToSection('marketing-entities')}>
+              Workflows
+            </button>
+            <button type="button" className="marketingNavLink" onClick={() => scrollToSection('marketing-platform')}>
+              Platform
             </button>
             {authed ? (
               <Link className="marketingNavLink" to="/settings">
