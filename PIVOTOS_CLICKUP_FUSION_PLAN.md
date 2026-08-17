@@ -1,3 +1,6 @@
+> **SUPERSEDED 2026-08-14.** Historical reference only, no authority.
+> Its "Built" status claims are not accurate against the Constitution. Current authority: `plan/00_MASTER_INDEX.md`.
+
 # PivotOS × ClickUp Fusion Plan
 
 **Goal:** Adopt ClickUp’s clarity, modularity, and AI-first marketing — while keeping PivotOS’s multi-entity operator model, approval gates, and activity-centric OS.

@@ -40,10 +40,10 @@ export function AgentAiSpark({ entities, onGenerated }: Props) {
   ]
 
   return (
-    <div className="deck-card border-violet-200 bg-gradient-to-br from-violet-50/80 to-white">
-      <p className="text-sm font-semibold text-violet-900">✨ AI Agent Spark</p>
-      <p className="mt-1 text-sm text-violet-800/80">
-        Describe what you need — OpenAI designs the agent for {entities[0]?.name ?? 'your business'}.
+    <div className="rounded-2xl border border-accent/20 bg-[#edf5ef] p-5">
+      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-accent">AI designs the role</p>
+      <p className="mt-2 text-sm text-muted">
+        Describe the job. Pivot drafts an agent for {entities[0]?.name ?? 'your business'}. Risky actions still need your approval.
       </p>
       <textarea
         className="field-input mt-3 min-h-[88px]"
@@ -56,7 +56,7 @@ export function AgentAiSpark({ entities, onGenerated }: Props) {
           <button
             key={ex}
             type="button"
-            className="rounded-full border border-violet-200 bg-white px-3 py-1 text-xs text-violet-800 hover:bg-violet-50"
+            className="rounded-full border border-black/10 bg-white px-3 py-1 text-xs text-muted hover:border-accent/30 hover:text-accent"
             onClick={() => setBrief(ex)}
           >
             {ex.slice(0, 42)}…

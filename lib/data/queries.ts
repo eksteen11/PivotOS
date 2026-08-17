@@ -109,7 +109,7 @@ export async function getMemories(entityIds?: string[]): Promise<Memory[]> {
 
 export async function getActivityLogs(entityIds?: string[]) {
   const sb = await createClient()
-  let q = sb.from('activity_logs').select('*').order('created_at', { ascending: false }).limit(10)
+  let q = sb.from('activity_logs').select('*').order('created_at', { ascending: false }).limit(50)
   if (entityIds?.length) q = q.in('entity_id', entityIds)
   const { data } = await q
   return data ?? []

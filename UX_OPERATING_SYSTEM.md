@@ -1,3 +1,6 @@
+> **SUPERSEDED 2026-08-14.** Historical reference only, no authority.
+> Current UX authority: `DESIGN_RULES.md`. Its separate "Global Command Centre" vs "Today View" split and dark/green tokens conflict with the approved single Command Centre and Manrope palette.
+
 # UX Operating System — PivotOS
 
 ## Canonical Naming Glossary (Lock)

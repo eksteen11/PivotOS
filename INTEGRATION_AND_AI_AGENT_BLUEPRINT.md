@@ -1,3 +1,6 @@
+> **SUPERSEDED 2026-08-14.** Historical reference only, no authority.
+> Current authority: `plan/03_AGENT_REGISTRY.md` (12 archetypes, not 18 named agents) and `plan/05_INTEGRATION_MATRIX.md`.
+
 # Integration and AI Agent Blueprint — PivotOS
 
 ## Canonical Naming Glossary (Lock)

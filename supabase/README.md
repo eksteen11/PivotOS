@@ -4,12 +4,9 @@
 
 Primary app: **Next.js** (`npm run dev` → http://localhost:3000)
 
-Legacy Vite PWA remains under `src/` (`npm run dev:vite`).
+The Vite prototype under `src/` is archive only and is not part of the production build.
 
-### Latest migrations
-
-- `0010_pivot_os_core.sql` — agents, processes, tools, approvals, memory, logs
-- `0011_seed_pivot_os_demo.sql` — demo agents, tools, processes, approvals
+`0011_seed_pivot_os_demo.sql` is a development seed. It must not be treated as production data.
 
 ### Env
 

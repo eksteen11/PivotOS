@@ -1,3 +1,7 @@
+> **SUPERSEDED 2026-08-14.** Historical reference only, no authority.
+> Its generic "AI Business Operating System" identity conflicts with the Constitution: Pivot OS is DJ Eksteen's Founder Operating System.
+> Current authority: `CONSTITUTION.md` → `plan/00_MASTER_INDEX.md`.
+
 # Pivot OS — Masterplan V3
 
 ## AI Business Operating System

@@ -2,28 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 @layer base {
   html {
     @apply antialiased;
   }
   body {
     @apply bg-surface text-ink font-sans;
+    background-image:
+      radial-gradient(circle at 82% 8%, rgba(23, 114, 75, 0.08), transparent 24rem),
+      radial-gradient(circle at 10% 38%, rgba(222, 216, 198, 0.32), transparent 30rem);
+    background-attachment: fixed;
+  }
+  ::selection {
+    @apply bg-accent/20 text-ink;
   }
 }
 
 @layer components {
   .deck-card {
-    @apply rounded-2xl bg-white border border-black/5 shadow-deck p-6;
+    @apply rounded-2xl border border-black/[0.07] bg-white/90 p-5 shadow-deck backdrop-blur-sm sm:p-6;
   }
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-teal-700 transition;
+    @apply inline-flex min-h-11 items-center justify-center rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent/90 active:scale-[0.99];
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm font-medium text-ink hover:bg-black/5 transition;
+    @apply inline-flex min-h-11 items-center justify-center rounded-xl border border-black/10 bg-white/80 px-5 py-2.5 text-sm font-medium text-ink transition hover:bg-black/[0.03];
   }
   .field-input {
-    @apply w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/20;
+    @apply w-full rounded-xl border border-black/10 bg-white/80 px-4 py-3 text-sm outline-none transition placeholder:text-muted/70 focus:border-accent focus:ring-2 focus:ring-accent/15;
   }
 }

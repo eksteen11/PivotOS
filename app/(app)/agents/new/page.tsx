@@ -22,8 +22,9 @@ export default async function NewAgentPage({
   return (
     <section className="mx-auto max-w-xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Agent Factory</h1>
-        <p className="mt-1 text-muted">Create a new digital employee without code.</p>
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-accent">Create with care</p>
+        <h1 className="mt-2 text-3xl font-extrabold tracking-tight">Agent Factory</h1>
+        <p className="mt-2 text-sm text-muted">Create a digital employee. Risky actions still need your approval.</p>
       </div>
       <AgentFactoryShell entities={entities} suggestion={suggestion} />
     </section>

@@ -1,3 +1,6 @@
+> **SUPERSEDED 2026-08-14.** Historical reference only, no authority.
+> Current authority: `DESIGN_RULES.md` + `TECH_STACK.md` information architecture. Its navigation omits Approvals and includes deferred multi-user team access.
+
 # PivotOS Wireframe Layout System
 
 ## 1) Purpose

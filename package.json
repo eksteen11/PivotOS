@@ -5,11 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "dev:vite": "vite",
     "build": "next build",
-    "build:vite": "tsc -b && vite build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

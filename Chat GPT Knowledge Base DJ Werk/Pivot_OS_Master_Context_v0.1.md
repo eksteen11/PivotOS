@@ -1,3 +1,6 @@
+> **SUPERSEDED 2026-08-14** as a build guide. Its philosophy remains valid and is carried into `CONSTITUTION.md`; its sequencing does not.
+> Current authority: `CONSTITUTION.md` → `plan/00_MASTER_INDEX.md`.
+
 # Pivot OS Master Project Context
 **Version:** 0.1
 **Purpose:** This document is the single starting point for continuing the Pivot OS project in Codex or Cursor.

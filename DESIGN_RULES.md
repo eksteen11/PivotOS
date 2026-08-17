@@ -1,144 +1,103 @@
 # PivotOS Design Rules
 
+**Authority:** Follows `CONSTITUTION.md` (approved 2026-08-14).
+
 ## Purpose
-This file is the non-negotiable design system and UX quality gate for PivotOS.
-Every new screen, component, and refactor must follow these rules.
+Non-negotiable UX quality gate for the Founder Operating System rebuild.
 
 ---
 
-## 1) Product Feel (Always)
-- Calm, premium, fast, trustworthy.
-- Mobile-first, desktop-powerful.
+## 1) Product Feel
+- Calm executive clarity with bold modern confidence.
+- Fast, trustworthy, uncluttered.
+- Phone-first, with the same core capability adapted cleanly for desktop and tablet.
 - Clear in 3 seconds.
 - One primary action per section.
-- No visual noise.
+- **Clear Horizon** is the approved visual direction: cinematic key moments, calm operational screens.
+- Approved Stitch references: Cinematic Login, Living Home, Clear Horizon Inbox, Decision Theater Approvals, Living Agent Gallery.
 
 ---
 
 ## 2) Global UX Anchors
-- Global Command Centre is the default signed-in home.
-- A dedicated marketing Landing Page exists for signed-out users.
-- Users can move between:
-  - Signed-out Landing Page
-  - Auth
-  - Signed-in Command Centre
-  - Back to public Home/How-it-Works pages
-- Navigation should never feel like a dead-end.
+- Command Centre is the signed-in home.
+- Founder-first product with permission-scoped collaborator views.
+- Navigation exposes only real spine + active commercial lane.
+- Never show fake-complete workspaces.
+- Never dead-end the founder.
 
 ---
 
-## 3) Information Hierarchy Rules
+## 3) Information Hierarchy
 - Cards first, tables second.
-- Progressive disclosure:
-  - Level 1: summary cards
-  - Level 2: filtered lists/views
-  - Level 3: record detail + history
-- Show what matters now:
-  - urgent
-  - waiting
-  - revenue-impact
-  - risk
+- Progressive disclosure: summary → list → record detail/history.
+- Surface now: urgent, waiting, revenue-impact, risk.
+- Keep daily screens simple; place structural complexity in a dedicated **Operating Map** view.
+- Operating Map hierarchy: tenant/group → company → team/function → system → process → agent/tool.
+- The map is permission-filtered, supports drill-down, and shows status and flow without exposing hidden nodes or data.
 
 ---
 
-## 4) Layout System Rules
+## 4) Layout
 - 8px spacing rhythm.
-- Consistent container widths and gutters.
-- Rounded card language (8/12/16 radius family).
-- Stable visual rhythm:
-  - title
-  - short context line
-  - primary action
-  - secondary actions
-- No over-dense blocks on first view.
+- Consistent gutters and widths.
+- Title → short context → primary action → secondary actions.
+- No over-dense first view.
 
 ---
 
-## 5) Typography & Color Rules
-- Primary type family: Manrope.
-- Strong heading hierarchy, readable body copy.
-- Color usage:
-  - green = primary progress/action
-  - blue = secondary/info
+## 5) Typography & Colour
+- Manrope.
+- Strong hierarchy.
+- Warm cream surfaces, deep ink typography, and one verdant green accent.
+- Purple is retired.
+- Semantic colour:
+  - accent/progress = action
+  - amber/red = risk
   - neutral = structure
-  - red/amber = risk and warnings
-- Maintain WCAG-friendly contrast.
+- WCAG-friendly contrast.
 
 ---
 
-## 6) Component Rules
-- Buttons:
-  - one clearly dominant primary CTA
-  - secondary and ghost actions visually subordinate
-- Inputs:
-  - clear labels
-  - obvious focus state
-  - no ambiguous placeholders-only forms
-- Status chips:
-  - short, explicit labels
-  - consistent color semantics
-- Empty states:
-  - one-line explanation
-  - one primary next action
+## 6) Components
+- One dominant primary CTA.
+- Labels on inputs (not placeholders alone).
+- Short status chips with consistent meaning.
+- Empty states: one-line truth + one next action.
+- Simulated integrations must say “simulated”.
 
 ---
 
-## 7) Mobile + PWA Rules
+## 7) Responsive
+- Full workflow parity across breakpoints.
+- First release is an installable web app.
+- Phone uses a simple five-item bottom navigation.
+- Desktop uses a labelled left sidebar.
 - Thumb-friendly actions.
-- Sticky quick access for key actions.
-- Offline-safe for critical flows:
-  - capture
-  - tasks
-  - meetings
-  - inbox triage
-- Always show sync state clearly.
+- Sync/auth/connection state always visible when relevant.
 
 ---
 
-## 8) AI UX Rules
-- AI suggests first, executes risky actions only with approval.
-- AI outputs must be concise and actionable.
-- Always show:
-  - why AI suggested it
-  - what data it used (high-level)
-  - what action will happen
-- No gimmick AI copy or fake intelligence effects.
+## 8) AI UX
+- Suggest first; approve risky actions.
+- Always show why, what data, what happens next.
+- No fake “sent” unless it really sent.
 
 ---
 
-## 9) Continuous Improvement Loop (Mandatory)
-For every completed build slice:
-1. Run the screen and test real flows.
-2. Ask: Is this simpler? clearer? faster?
-3. Apply at least one UX improvement if obvious.
-4. Re-test.
-5. Log what improved.
-
-Cursor prompt pattern to use repeatedly:
-- "Improve this screen using DESIGN_RULES.md: reduce cognitive load, strengthen hierarchy, and keep one primary action."
-- "Apply a premium mobile-first polish pass per DESIGN_RULES.md without changing business logic."
-- "Critique and improve this workflow for clarity and speed using DESIGN_RULES.md."
+## 9) Anti-Patterns
+- Nine workspace skins with no depth
+- Equally strong button clutter
+- Hidden entity context
+- Approval bypass
+- Feature-heavy screens with no clear next action
 
 ---
 
 ## 10) UI Definition of Done
-A screen is done only if:
-- Core task can be completed without explanation.
-- Visual hierarchy is obvious.
-- Primary action stands out.
-- Empty/loading/error states are present.
-- Mobile layout is validated.
-- No cross-entity confusion.
-- Lint/build pass.
-
----
-
-## 11) Anti-Patterns (Do Not Ship)
-- Too many equally strong buttons.
-- Long unstructured forms on first interaction.
-- Hidden critical status.
-- Unlabeled icons.
-- Mixed entity context without clear boundary.
-- AI actions that bypass approval rules.
-- Feature-heavy screen with no clear next action.
-
+- Task completable without explanation
+- Hierarchy obvious
+- Primary action clear
+- Empty/loading/error present
+- Mobile checked
+- No cross-entity confusion
+- Build passes

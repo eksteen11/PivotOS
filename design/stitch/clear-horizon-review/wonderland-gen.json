@@ -1,0 +1,27 @@
+[
+  {
+    "title": "V1 Living World",
+    "ok": true,
+    "snippet": "{\"id\": 1, \"jsonrpc\": \"2.0\", \"result\": {\"content\": [{\"text\": \"{\\\"projectId\\\":\\\"9250032287125748927\\\",\\\"sessionId\\\":\\\"2395213939152024544\\\",\\\"outputComponents\\\":[{\\\"design\\\":{\\\"screens\\\":[{\\\"screenshot\\\":{\\\"name\\\":\\\"projects/9250032287125748927/files/b74e3615cbd3466ba736950567cc7fba\\\",\\\"downloadUrl\\\":\\\"https://lh3.googleusercontent.com/aida/AP1WRLuRTgJ5j88rjGUVp7s1MO8OE2iEs3DkUJSVoBVesTO0kamjvreBNKFt9l9NrNFhOxZ1aUIwKS8QNcu0vtOpvPNYYOcX8D6xjralcg5eHTZTw0kN565lygJmPfxpT_Ei0pkKFmRqcj07nz9FnJXkHsah0GM"
+  },
+  {
+    "title": "V2 Type Stage",
+    "ok": true,
+    "snippet": "{\"id\": 2, \"jsonrpc\": \"2.0\", \"result\": {\"content\": [{\"text\": \"{\\\"projectId\\\":\\\"9250032287125748927\\\",\\\"sessionId\\\":\\\"61560163246936221\\\",\\\"outputComponents\\\":[{\\\"design\\\":{\\\"screens\\\":[{\\\"screenshot\\\":{\\\"name\\\":\\\"projects/9250032287125748927/files/cac306cc44b34a8eb15659cd64d8c3c3\\\",\\\"downloadUrl\\\":\\\"https://lh3.googleusercontent.com/aida/AP1WRLsy3WcdUmcht1ur-qc5hZ5fcOl4s25GjtvQHM42DNG3wFG0cLc-SskFyY1pcE8TwUIYVOWW134FIHxy4WCrvre1KPFhwjOW4Jp1YNxPgdOVXkqSU8o5PNu0wwcbA7PZV7WJm88teY3F7uwRzYV0---Y6ufAX"
+  },
+  {
+    "title": "V3 Decision Theater",
+    "ok": true,
+    "snippet": "{\"id\": 3, \"jsonrpc\": \"2.0\", \"result\": {\"content\": [{\"text\": \"{\\\"projectId\\\":\\\"9250032287125748927\\\",\\\"sessionId\\\":\\\"6565364158509014212\\\",\\\"outputComponents\\\":[{\\\"design\\\":{\\\"screens\\\":[{\\\"screenshot\\\":{\\\"name\\\":\\\"projects/9250032287125748927/files/d4e1ed2fdeeb48a4b091456ea4b9fe33\\\",\\\"downloadUrl\\\":\\\"https://lh3.googleusercontent.com/aida/AP1WRLur8uUuUNeWaGtkWkNx_jC2w-nkrEXZhIbxuG4LGNSGMDQe83YUOjmeuNzZGKIZQaZof1vhjJATQUg6mybYV2-_ArrI9b_5SM1SMV9Rpgh9wx6z0RhuRcMCY9lz3q46FhpHpsoCs6lQjxaw4fMEp5J63Fd"
+  },
+  {
+    "title": "V4 Agent Gallery",
+    "ok": true,
+    "snippet": "{\"id\": 4, \"jsonrpc\": \"2.0\", \"result\": {\"content\": [{\"text\": \"{\\\"projectId\\\":\\\"9250032287125748927\\\",\\\"sessionId\\\":\\\"13176017237274886795\\\",\\\"outputComponents\\\":[{\\\"design\\\":{\\\"screens\\\":[{\\\"screenshot\\\":{\\\"name\\\":\\\"projects/9250032287125748927/files/c742325a602645469ec198259555f3e7\\\",\\\"downloadUrl\\\":\\\"https://lh3.googleusercontent.com/aida/AP1WRLsersquZE7V6O6rJHuPEXHE9wPNEJ4P1aSchMwDjRaWgtYexqh-yqjV-J768NmBcrqC0SkWsPcWkN-PWZJtCqlZRhDXANj5RYDLUtoVvDGrVh9KDRwu3D3RWB2nTwe2NEoXR1slBjYKOvRiiQsLBLlLcM"
+  },
+  {
+    "title": "V5 Material System",
+    "ok": true,
+    "snippet": "{\"id\": 5, \"jsonrpc\": \"2.0\", \"result\": {\"content\": [{\"text\": \"{\\\"projectId\\\":\\\"9250032287125748927\\\",\\\"sessionId\\\":\\\"2552181502036120432\\\",\\\"outputComponents\\\":[{\\\"design\\\":{\\\"screens\\\":[{\\\"screenshot\\\":{\\\"name\\\":\\\"projects/9250032287125748927/files/3d0c7d6741e9459c8522760495564691\\\",\\\"downloadUrl\\\":\\\"https://lh3.googleusercontent.com/aida/AP1WRLvjeAfwqh-4BLBQQ8YTTOnByCZns_YMJL6Nir_litcuDnszoOiZTdzqCNtbBQ503UnYN09uoeLujKk0YvjhoHV32OYX6qFK6nXW-ElyknL9grWGiD997d57XTQ5kG91yDrblvnVvVK0_rPyjc9QKVS7zr_"
+  }
+]

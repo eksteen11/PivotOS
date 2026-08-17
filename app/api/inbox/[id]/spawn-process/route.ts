@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { writeActivityLog } from '@/lib/data/audit'
 import { createClient } from '@/lib/supabase/server'
 import { templateBySlug } from '@/lib/processes/templates'
 
@@ -53,13 +54,18 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
   await sb.from('items').update({ status: 'planned', process_id: process.id }).eq('id', id)
 
-  await sb.from('activity_logs').insert({
+  const auditError = await writeActivityLog(sb, {
     user_id: user.id,
     entity_id: item.entity_id,
     process_id: process.id,
     action: 'process.spawned_from_inbox',
     payload: { inbox_item_id: id, template: template.slug },
   })
+  if (auditError) {
+    await sb.from('processes').update({ status: 'cancelled' }).eq('id', process.id)
+    await sb.from('items').update({ status: 'inbox', process_id: null }).eq('id', id)
+    return NextResponse.json({ error: 'Process was not kept because the audit trail could not be written' }, { status: 500 })
+  }
 
   return NextResponse.json({ ok: true, process_id: process.id })
 }

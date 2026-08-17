@@ -5,18 +5,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        surface: '#f7f8fa',
-        ink: '#1a1c1c',
-        muted: '#6b7280',
-        accent: '#0d9488',
-        danger: '#dc2626',
-        warn: '#d97706',
+        surface: '#faf9f5',
+        ink: '#121612',
+        muted: '#73776f',
+        accent: '#17724b',
+        danger: '#b94032',
+        warn: '#d7662f',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-manrope)', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        deck: '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.04)',
+        deck: '0 1px 2px rgba(30,38,29,0.04), 0 10px 30px rgba(30,38,29,0.05)',
       },
     },
   },
