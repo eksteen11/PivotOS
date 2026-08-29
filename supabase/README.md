@@ -6,13 +6,15 @@ Primary app: **Next.js** (`npm run dev` → http://localhost:3000)
 
 The Vite prototype under `src/` is archive only and is not part of the production build.
 
-`0011_seed_pivot_os_demo.sql` is a development seed. It must not be treated as production data.
+`0011_seed_pivot_os_demo.sql` is a development seed. Production rejects `/api/demo/reset`.
+`0008_import_dj_werk_full.sql` is a one-off bulk import with a hardcoded UUID. Do not re-run it.
 
 ### Env
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+PIVOT_ENV=local
 ```
 
 ---
@@ -34,8 +36,8 @@ Or locally: `supabase db push` from the `pivotos` folder if the Supabase CLI is 
 
 ## 3) Get client env vars
 - Project Settings → API:
-  - `VITE_SUPABASE_URL`
-  - `VITE_SUPABASE_ANON_KEY`
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
 Put them into a local `.env` (copy from `.env.example`).
 

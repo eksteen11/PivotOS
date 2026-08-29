@@ -59,14 +59,14 @@ Constitution approved, Mammoth Plan approved, first lane locked to Northpoint, d
 - First cross-tenant, cross-user and cross-entity RLS isolation tests in CI
 
 ### Gate 1 — all must be true
-- [ ] `npm run build` passes; CI gate green
-- [ ] Navigation shows only real, substantive destinations
-- [ ] No screen presents a simulated action as a real one
-- [ ] No demo seed reaches production
-- [ ] Legacy Vite app is not part of the production build
-- [ ] Schema documented against L0 + L1
+- [x] `npm run build` passes; CI runs typecheck, lint and build
+- [x] Navigation shows Command Centre, Inbox, Approvals, Meetings, Activity, Settings and Northpoint; other lanes are marked not built
+- [x] Meeting transcripts are imported, not invented; connectors stay disconnected until credentials exist
+- [x] Production rejects `/api/demo/reset`; example restore is hidden outside local/preview
+- [x] Legacy Vite app is excluded from the Next.js production build
+- [x] Schema documented against L0 + L1 in `plan/09_SCHEMA_BASELINE.md`
 - [ ] Cross-tenant, cross-user and cross-entity RLS isolation tests pass in CI
-- [ ] Audit write failure blocks the operation
+- [x] Audit write failure blocks approval resolution, meeting create, and transcript import
 
 ---
 

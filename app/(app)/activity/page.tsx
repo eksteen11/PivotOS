@@ -17,7 +17,7 @@ export default async function ActivityPage() {
       </div>
       {logs.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-black/10 bg-white/80 p-8 text-sm text-muted">
-          No activity yet. Capture, classify, approve or analyse something to start the trail.
+          No activity yet. Capture, classify or approve something to start the trail.
         </p>
       ) : (
         <ul className="space-y-3">

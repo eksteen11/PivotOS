@@ -1,3 +1,5 @@
+-- ARCHIVE-CLASS BULK IMPORT. Do not re-run in production.
+-- Hardcoded founder UUID. Treat as a one-off migration snapshot, not live seed.
 -- Full DJ Werk 2026 import. Re-runnable via seed_batch replace.
 delete from public.items where user_id = '536d3701-329a-45b9-b683-4b2f9c7bdb53'::uuid;
 

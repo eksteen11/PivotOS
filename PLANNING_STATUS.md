@@ -2,6 +2,20 @@
 
 **Current phase:** Phase 1 — Clean Product Foundation. Gate 1 not yet passed.
 
+## Ready to go?
+
+**No — not as the daily system of record.** You can sign in, capture inbox items, save meeting notes, and approve or reject queued work. You cannot yet treat Pivot as the live operating system.
+
+| Question | Answer |
+|---|---|
+| Can DJ log in and capture work? | Yes, if Supabase env is set |
+| Is Gate 1 signed? | No |
+| Are connectors live (Gmail, WhatsApp, Calendar, money)? | No |
+| Can a fabricated transcript or send confirmation appear? | No — transcript import is paste-only; demo restore is blocked in production |
+| What still blocks Gate 1? | CI proof, RLS isolation tests, error tracking, tenant schema |
+
+Phase 2 does not start until Gate 1 is signed. Open decisions D-05 and D-06 still block OAuth and recording.
+
 ---
 
 ## Active authority

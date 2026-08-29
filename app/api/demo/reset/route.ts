@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server'
 
+import { isProduction } from '@/lib/env'
 import { createClient } from '@/lib/supabase/server'
 
 export async function POST() {
+  if (isProduction) {
+    return NextResponse.json(
+      { error: 'Example workflow restore is not available in production' },
+      { status: 403 },
+    )
+  }
+
   const sb = await createClient()
   const { data: { user } } = await sb.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

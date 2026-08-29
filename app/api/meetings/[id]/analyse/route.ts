@@ -1,9 +1,20 @@
 import { NextResponse } from 'next/server'
 
+import { writeActivityLog } from '@/lib/data/audit'
+import { readJsonBody } from '@/lib/http/readJson'
 import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  const body = await readJsonBody(request)
+  const transcript = String(body.transcript ?? '').trim()
+  if (!transcript) {
+    return NextResponse.json(
+      { error: 'Paste a real transcript. Pivot does not invent meeting notes.' },
+      { status: 400 },
+    )
+  }
+
   const sb = await createClient()
   const { data: { user } } = await sb.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -11,46 +22,31 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { data: meeting } = await sb.from('items').select('*').eq('id', id).eq('type', 'meeting').single()
   if (!meeting) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  const transcript = [
-    'Founder: Confirm next actions and owners.',
-    'Team: Pipeline updates shared.',
-    'Decision: AI will draft follow-ups for approval.',
-    'Decision: Blocked items escalate to Command Centre.',
-  ].join('\n')
-
-  const decisions = [
-    'Create follow-up tasks from this meeting',
-    'Queue outbound drafts for approval',
-    'Update process deadlines this week',
-  ]
-
-  const meta = {
-    ...(meeting.meta as Record<string, unknown> | null),
+  const previousMeta = (meeting.meta as Record<string, unknown> | null) ?? {}
+  const meta: Record<string, unknown> = {
+    ...previousMeta,
     transcript,
-    decisions,
-    analysed_at: new Date().toISOString(),
+    transcript_source: 'manual_import',
+    imported_at: new Date().toISOString(),
   }
+  delete meta.decisions
 
-  await sb.from('items').update({ meta, content: `${meeting.content}\n\nTranscript ready.` }).eq('id', id)
+  const { error: updateError } = await sb.from('items').update({ meta }).eq('id', id)
+  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
 
-  for (const decision of decisions) {
-    await sb.from('items').insert({
-      user_id: user.id,
-      entity_id: meeting.entity_id,
-      type: 'task',
-      status: 'planned',
-      title: decision,
-      content: `From meeting: ${meeting.title}`,
-      meta: { from_meeting_id: id, seed_batch: 'meeting_decisions' },
-    })
-  }
-
-  await sb.from('activity_logs').insert({
+  const auditError = await writeActivityLog(sb, {
     user_id: user.id,
     entity_id: meeting.entity_id,
-    action: 'meeting.simulated_transcript',
-    payload: { meeting_id: id, decisions },
+    action: 'meeting.transcript_imported',
+    payload: { meeting_id: id, source: 'manual_import' },
   })
+  if (auditError) {
+    await sb.from('items').update({ meta: previousMeta }).eq('id', id)
+    return NextResponse.json(
+      { error: 'Transcript was not kept because the audit trail could not be written' },
+      { status: 500 },
+    )
+  }
 
-  return NextResponse.json({ ok: true, transcript, decisions })
+  return NextResponse.json({ ok: true })
 }
