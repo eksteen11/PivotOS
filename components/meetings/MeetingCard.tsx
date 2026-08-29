@@ -9,15 +9,29 @@ import type { MeetingItem } from '@/lib/data/meetings'
 export function MeetingCard({ meeting }: { meeting: MeetingItem }) {
   const router = useRouter()
   const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [draft, setDraft] = useState('')
   const prep = Array.isArray(meeting.meta?.prep) ? (meeting.meta.prep as string[]) : []
   const transcript = typeof meeting.meta?.transcript === 'string' ? meeting.meta.transcript : null
-  const decisions = Array.isArray(meeting.meta?.decisions) ? (meeting.meta.decisions as string[]) : []
 
-  async function analyse() {
+  async function importTranscript(e: React.FormEvent) {
+    e.preventDefault()
+    if (!draft.trim()) return
     setBusy(true)
-    await fetch(`/api/meetings/${meeting.id}/analyse`, { method: 'POST' })
+    setError(null)
+    const response = await fetch(`/api/meetings/${meeting.id}/analyse`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transcript: draft }),
+    })
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({})) as { error?: string }
+      setError(body.error ?? 'Could not save transcript')
+    } else {
+      setDraft('')
+      router.refresh()
+    }
     setBusy(false)
-    router.refresh()
   }
 
   return (
@@ -39,22 +53,27 @@ export function MeetingCard({ meeting }: { meeting: MeetingItem }) {
         </ul>
       ) : null}
       {transcript ? (
-        <pre className="mt-3 max-h-32 overflow-auto rounded-xl bg-black/[0.03] p-3 text-xs text-muted">{transcript}</pre>
-      ) : null}
-      {decisions.length > 0 ? (
-        <div className="mt-3 text-xs">
-          <p className="font-semibold text-accent">Approved tasks queued</p>
-          <ul className="mt-1 space-y-1 text-muted">
-            {decisions.map((d) => (
-              <li key={d}>• {d}</li>
-            ))}
-          </ul>
+        <div className="mt-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted">Imported transcript</p>
+          <pre className="mt-2 max-h-32 overflow-auto rounded-xl bg-black/[0.03] p-3 text-xs text-muted">{transcript}</pre>
         </div>
-      ) : null}
-      <button type="button" className="btn-primary mt-4 text-sm" disabled={busy} onClick={() => void analyse()}>
-        {busy ? 'Analysing demo…' : transcript ? 'Re-run demo analysis' : 'Run demo analysis'}
-      </button>
-      <p className="mt-2 text-[10px] leading-4 text-muted">Simulated — no provider is called and no external action is taken.</p>
+      ) : (
+        <form onSubmit={(e) => void importTranscript(e)} className="mt-4 space-y-3">
+          <label className="block text-sm font-semibold">
+            Paste a real transcript
+            <textarea
+              className="field-input mt-2 min-h-24 resize-y"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Paste notes from a real recording or attendee. Pivot will not invent this."
+            />
+          </label>
+          <button type="submit" className="btn-primary text-sm" disabled={busy || !draft.trim()}>
+            {busy ? 'Saving…' : 'Save transcript'}
+          </button>
+        </form>
+      )}
+      {error ? <p className="mt-2 text-sm font-semibold text-danger">{error}</p> : null}
     </article>
   )
 }

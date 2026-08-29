@@ -15,7 +15,7 @@ export default async function MeetingsPage() {
       <div>
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-accent">Prepare and remember</p>
         <h1 className="mt-2 text-3xl font-extrabold tracking-tight">Meetings</h1>
-        <p className="mt-2 text-sm text-muted">Prep packs, imported notes and approval-safe follow-up. Calendar sync is not connected.</p>
+        <p className="mt-2 text-sm text-muted">Save meeting notes and paste a real transcript. Calendar sync is not connected, and Pivot does not invent transcripts.</p>
       </div>
       <MeetingCapture entities={entities} />
       <div className="grid gap-4 md:grid-cols-2">

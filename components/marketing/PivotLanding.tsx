@@ -46,7 +46,7 @@ export function PivotLanding() {
           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-accent">Honest status</p>
           <h2 className="mt-3 text-3xl font-extrabold tracking-tight">Built for daily command. Not a finished SaaS yet.</h2>
           <ul className="mt-6 space-y-3 text-sm leading-6 text-muted">
-            <li>Live today: inbox capture, classification, approvals, meetings notes, processes, agents and an operating map.</li>
+            <li>Live today: inbox capture, classification, approvals, meeting notes with imported transcripts, processes, agents and an operating map.</li>
             <li>Northpoint is the first commercial lane. Other business lanes stay marked not built until they are real.</li>
             <li>Gmail, WhatsApp send, calendar sync and money movement are not connected. Nothing is marked sent unless it actually sent.</li>
             <li>Offline capture is local only. Approvals require a connection.</li>
