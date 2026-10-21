@@ -1,4 +1,5 @@
 import type { MeetingItem } from '@/lib/data/meetings'
+import { toSastIso } from '@/lib/intake/shared'
 
 const TZ = 'Africa/Johannesburg'
 
@@ -94,6 +95,15 @@ export function parseWeekParam(value: unknown, now = new Date()) {
   const raw = Array.isArray(value) ? value[0] : value
   if (typeof raw === 'string' && isSastDateKey(raw.trim())) return weekRangeForDate(raw.trim(), now)
   return thisWeekRange(now)
+}
+
+export function meetingTimeLabel(core: { schedule: { confirmed: boolean; startAt: string }; legacyDueAt: string | null }) {
+  if (core.schedule.confirmed) {
+    const iso = toSastIso(core.schedule.startAt)
+    if (iso) return formatSastLabel(iso)
+  }
+  if (core.legacyDueAt) return formatSastLabel(core.legacyDueAt)
+  return ''
 }
 
 export function formatSastLabel(value: string) {

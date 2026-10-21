@@ -2,7 +2,6 @@ import { notFound } from 'next/navigation'
 
 import { MeetingWorkspace } from '@/components/meetings/MeetingWorkspace'
 import { getMeeting } from '@/lib/data/meetings'
-import { formatSastLabel } from '@/lib/door/meetings'
 import { requireFounder } from '@/lib/auth/requireFounder'
 import { entitySlugFrom, readMeetingCore, sourceLink } from '@/lib/meetings/core'
 import { readOwnedWorkSummaries } from '@/lib/workspace/data'
@@ -23,7 +22,6 @@ export default async function MeetingPage({ params }: { params: Promise<{ id: st
       updatedAt={row.updated_at || ''}
       core={core}
       followUps={followUps}
-      timeLabel={row.due_at ? formatSastLabel(row.due_at) : ''}
       sourceHref={sourceLink(core)}
     />
   )

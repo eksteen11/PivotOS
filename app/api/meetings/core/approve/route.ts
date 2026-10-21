@@ -92,7 +92,7 @@ export async function POST(request: Request) {
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
   const actions = (result.meeting.reviewClaim?.actions ?? []).filter((action) => action.include)
   const followUps = result.followUpItemIds.flatMap((id, index) => {
-    const summary = workSummary({ id, title: actions[index]?.title ?? '', status: 'planned' })
+    const summary = workSummary({ id, title: actions[index]?.title ?? '', status: 'planned', reviewed: true, source: 'meeting-follow-up' })
     return summary ? [summary] : []
   })
   return NextResponse.json({ followUpItemIds: result.followUpItemIds, followUps, alreadyApproved: result.alreadyApproved, updatedAt: result.updatedAt, meeting: result.meeting satisfies MeetingCore })

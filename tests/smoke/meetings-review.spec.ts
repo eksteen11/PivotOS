@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 
+import { meetingTimeLabel } from '@/lib/door/meetings'
 import { isUuid } from '@/lib/intake/shared'
 import { normalizeAnalysisContent } from '@/lib/intake/analyse'
 import { createAutosave } from '@/lib/meetings/autosave'
@@ -7,7 +8,9 @@ import { clarificationPatch, clarificationUserPayload } from '@/lib/meetings/cla
 import { applyMeetingPatch, createMeetingCore, type MeetingAction, type MeetingCore } from '@/lib/meetings/core'
 import { mergeIntakeMeeting, saveExistingIntakeMeeting } from '@/lib/meetings/intakeMeeting'
 import { noteRecoveryDecision } from '@/lib/meetings/noteRecovery'
-import { workRecordHref, workSummary } from '@/lib/workspace/workLink'
+import { boundedFetch, MEETING_REQUEST_MS, unconfirmedRequest } from '@/lib/meetings/request'
+import { applyWorkAction, statusLabels, type WorkCase } from '@/lib/workspace/model'
+import { reviewedWorkStart, workRecordHref, workStatusLabel, workSummary } from '@/lib/workspace/workLink'
 import { commitReviewedFollowUp, type ReviewRow, type ReviewStore, type ReviewTask } from '@/lib/meetings/reviewCommit'
 
 const meetingId = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'
@@ -234,7 +237,7 @@ test('an intake update loses to a review claim and keeps the progressed notes', 
   expect(read().core.reviewClaim?.phase).toBe('committed')
 })
 
-test('unsaved notes resume only when the server version is unchanged', () => {
+test('unsaved notes resume only when the server version is unchanged', async () => {
   expect(noteRecoveryDecision({ serverNotes: '', serverTranscript: '', serverUpdatedAt: 't0', stored: null })).toBe('none')
   expect(noteRecoveryDecision({ serverNotes: 'saved', serverTranscript: '', serverUpdatedAt: 't0', stored: { liveNotes: 'saved', meetingTranscript: '', baseUpdatedAt: 't0' } })).toBe('none')
   expect(noteRecoveryDecision({ serverNotes: '', serverTranscript: '', serverUpdatedAt: 't0', stored: { liveNotes: 'typed', meetingTranscript: '', baseUpdatedAt: 't0' } })).toBe('resume')
@@ -244,4 +247,40 @@ test('unsaved notes resume only when the server version is unchanged', () => {
   expect(href.includes('/processes')).toBe(false)
   expect(workSummary({ id: 'bbbbbbbb-bbbb-4ccc-8ddd-eeeeeeeeeeee', title: 'Confirm prices', status: 'planned' })?.title).toBe('Confirm prices')
   expect(workSummary({ id: 'not-an-id', title: 'Confirm prices', status: 'planned' })).toBeNull()
+  const open = createMeetingCore({ company: 'northpoint', purpose: 'Visit' })
+  expect(meetingTimeLabel(open)).toBe('')
+  const booked = createMeetingCore({ company: 'northpoint', purpose: 'Visit', schedule: { startAt: '2026-10-28T08:00', endAt: '2026-10-28T09:00', confirmed: true } })
+  expect(meetingTimeLabel(booked)).toMatch(/28 Oct/)
+  expect(meetingTimeLabel(booked)).toMatch(/08:00/)
+  expect(statusLabels.planned).toBe('Needs approval')
+  expect(workStatusLabel('planned', true)).toBe('Ready to start')
+  expect(workStatusLabel('planned')).toBe('Needs approval')
+  const start = reviewedWorkStart('planned', 'Meeting follow-up')
+  expect(start?.heading).toBe('Ready to start')
+  expect(start?.action).toBe('Start this work')
+  expect(start?.detail).toMatch(/own review/)
+  expect(reviewedWorkStart('planned', 'Manual capture')).toBeNull()
+  const reviewed: WorkCase = { id: 'bbbbbbbb-bbbb-4ccc-8ddd-eeeeeeeeeeee', entityId: 'entity', company: 'northpoint', systemId: '003', title: 'Confirm prices', notes: '', due: '', status: 'planned', source: 'Meeting follow-up', updatedAt: 't0', facts: {}, checked: [], history: [], lessons: [], kind: 'task', intake: { sourceCaptureId: '', proposalKind: 'task', externalBlocked: true } }
+  expect(() => applyWorkAction(reviewed, { kind: 'task', index: 0, checked: true }, 't1')).toThrow(/Approve the work plan/)
+  const originalFetch = globalThis.fetch
+  globalThis.fetch = () => Promise.reject(new TypeError('network down'))
+  let busy = true
+  try {
+    try {
+      await boundedFetch('/api/meetings/core/clarify', { method: 'POST', body: '{}' })
+    } catch (error) {
+      expect(error).toBeInstanceOf(TypeError)
+    } finally {
+      busy = false
+    }
+  } finally {
+    globalThis.fetch = originalFetch
+  }
+  expect(busy).toBe(false)
+  expect(MEETING_REQUEST_MS).toBe(35_000)
+  expect(unconfirmedRequest).not.toMatch(/Nothing was changed|Nothing new was saved/)
+  const slowBody = globalThis.fetch
+  globalThis.fetch = () => Promise.resolve(new Response(new ReadableStream({ start() {} }), { status: 200, headers: { 'content-type': 'application/json' } }))
+  await expect(boundedFetch('/api/meetings/core/approve', { method: 'POST', body: '{}' }, 40)).rejects.toThrow(/could not be confirmed/)
+  globalThis.fetch = slowBody
 })

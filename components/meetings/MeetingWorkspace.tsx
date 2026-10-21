@@ -5,6 +5,8 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 
 import { companies, getCompany, getSystem, systemFitsCompany, systems, type Company } from '@/lib/workspace/catalogue'
 import { createAutosave, type AutosaveSnapshot } from '@/lib/meetings/autosave'
+import { meetingTimeLabel } from '@/lib/door/meetings'
+import { boundedFetch, meetingRequestError } from '@/lib/meetings/request'
 import { canTransition, lifecycleLabel, nextQuestion, type MeetingAction, type MeetingCore, type MeetingLifecycle } from '@/lib/meetings/core'
 import { noteRecoveryDecision, noteRecoveryKey, parseNoteRecovery, type NoteDraft } from '@/lib/meetings/noteRecovery'
 import { workRecordHref, workStatusLabel, workSummary, type WorkSummary } from '@/lib/workspace/workLink'
@@ -12,7 +14,7 @@ import { workRecordHref, workStatusLabel, workSummary, type WorkSummary } from '
 const tabs = ['overview', 'prepare', 'notes', 'minutes', 'follow-up'] as const
 type Tab = (typeof tabs)[number]
 
-export function MeetingWorkspace({ meetingId, founderId, title, updatedAt: initialUpdatedAt, core: initialCore, followUps = [], timeLabel, sourceHref }: { meetingId: string; founderId: string; title: string; updatedAt: string; core: MeetingCore; followUps?: WorkSummary[]; timeLabel: string; sourceHref: string | null }) {
+export function MeetingWorkspace({ meetingId, founderId, title, updatedAt: initialUpdatedAt, core: initialCore, followUps = [], sourceHref }: { meetingId: string; founderId: string; title: string; updatedAt: string; core: MeetingCore; followUps?: WorkSummary[]; sourceHref: string | null }) {
   const [core, setCore] = useState(initialCore)
   const [updatedAt, setUpdatedAt] = useState(initialUpdatedAt)
   const [name, setName] = useState(title)
@@ -111,18 +113,23 @@ export function MeetingWorkspace({ meetingId, founderId, title, updatedAt: initi
     if (!stamp) return null
     setBusy(true)
     setError('')
-    const response = await fetch('/api/meetings/core', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: meetingId, updatedAt: stamp, patch }) })
-    const body = await response.json().catch(() => ({}))
-    setBusy(false)
-    if (!response.ok) {
-      setError(String(body.error ?? 'The meeting was not saved.'))
+    try {
+      const { response, body } = await boundedFetch('/api/meetings/core', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: meetingId, updatedAt: stamp, patch }) })
+      if (!response.ok) {
+        setError(String(body.error ?? 'The meeting was not saved.'))
+        return null
+      }
+      setCore(body.meeting)
+      const nextStamp = String(body.updatedAt ?? stamp)
+      setUpdatedAt(nextStamp)
+      saverRef.current?.adopt(nextStamp)
+      return { meeting: body.meeting as MeetingCore, updatedAt: nextStamp }
+    } catch {
+      setError(meetingRequestError())
       return null
+    } finally {
+      setBusy(false)
     }
-    setCore(body.meeting)
-    const nextStamp = String(body.updatedAt ?? stamp)
-    setUpdatedAt(nextStamp)
-    saverRef.current?.adopt(nextStamp)
-    return { meeting: body.meeting as MeetingCore, updatedAt: nextStamp }
   }
 
   async function clarify(event: FormEvent) {
@@ -133,18 +140,22 @@ export function MeetingWorkspace({ meetingId, founderId, title, updatedAt: initi
     if (!stamp) return
     setBusy(true)
     setError('')
-    const response = await fetch('/api/meetings/core/clarify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: meetingId, updatedAt: stamp, reply: text }) })
-    const body = await response.json().catch(() => ({}))
-    setBusy(false)
-    if (!response.ok) {
-      setError(String(body.error ?? 'That reply was not saved.'))
-      return
+    try {
+      const { response, body } = await boundedFetch('/api/meetings/core/clarify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: meetingId, updatedAt: stamp, reply: text }) })
+      if (!response.ok) {
+        setError(String(body.error ?? 'That reply was not saved.'))
+        return
+      }
+      setCore(body.meeting)
+      const nextStamp = String(body.updatedAt ?? stamp)
+      setUpdatedAt(nextStamp)
+      saverRef.current?.adopt(nextStamp)
+      setReply('')
+    } catch {
+      setError(meetingRequestError())
+    } finally {
+      setBusy(false)
     }
-    setCore(body.meeting)
-    const nextStamp = String(body.updatedAt ?? stamp)
-    setUpdatedAt(nextStamp)
-    saverRef.current?.adopt(nextStamp)
-    setReply('')
   }
 
   function queueNotes(next: Partial<{ liveNotes: string; meetingTranscript: string }>) {
@@ -191,18 +202,22 @@ export function MeetingWorkspace({ meetingId, founderId, title, updatedAt: initi
     }
     setBusy(true)
     setError('')
-    const response = await fetch('/api/meetings/core/minutes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: meetingId, updatedAt: stamp }) })
-    const body = await response.json().catch(() => ({}))
-    setBusy(false)
-    if (!response.ok) {
-      setError(String(body.error ?? 'Minutes were not drafted.'))
-      return
+    try {
+      const { response, body } = await boundedFetch('/api/meetings/core/minutes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: meetingId, updatedAt: stamp }) })
+      if (!response.ok) {
+        setError(String(body.error ?? 'Minutes were not drafted.'))
+        return
+      }
+      setCore((current) => ({ ...current, minutes: body.minutes, minutesStale: false, lifecycle: 'minutes_review' }))
+      const nextStamp = String(body.updatedAt ?? stamp)
+      setUpdatedAt(nextStamp)
+      saverRef.current?.adopt(nextStamp)
+      setTab('minutes')
+    } catch {
+      setError(meetingRequestError())
+    } finally {
+      setBusy(false)
     }
-    setCore((current) => ({ ...current, minutes: body.minutes, minutesStale: false, lifecycle: 'minutes_review' }))
-    const nextStamp = String(body.updatedAt ?? stamp)
-    setUpdatedAt(nextStamp)
-    saverRef.current?.adopt(nextStamp)
-    setTab('minutes')
   }
 
   async function approve() {
@@ -213,25 +228,29 @@ export function MeetingWorkspace({ meetingId, founderId, title, updatedAt: initi
     const actions = core.minutes.actions
     setBusy(true)
     setError('')
-    const response = await fetch('/api/meetings/core/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: meetingId, updatedAt: stamp, revision, actions }) })
-    const body = await response.json().catch(() => ({}))
-    setBusy(false)
-    if (!response.ok) {
-      if (body.meeting) setCore(body.meeting)
-      if (body.updatedAt) {
-        setUpdatedAt(String(body.updatedAt))
-        saverRef.current?.adopt(String(body.updatedAt))
+    try {
+      const { response, body } = await boundedFetch('/api/meetings/core/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: meetingId, updatedAt: stamp, revision, actions }) })
+      if (!response.ok) {
+        if (body.meeting) setCore(body.meeting)
+        if (body.updatedAt) {
+          setUpdatedAt(String(body.updatedAt))
+          saverRef.current?.adopt(String(body.updatedAt))
+        }
+        setError(String(body.error ?? 'Follow-up was not created.'))
+        return
       }
-      setError(String(body.error ?? 'Follow-up was not created.'))
-      return
+      const returned = Array.isArray(body.followUps) ? body.followUps.flatMap((item: unknown) => { const summary = workSummary(item); return summary ? [summary] : [] }) : []
+      if (returned.length) setSavedWork(returned)
+      setCore((current) => body.meeting ?? { ...current, lifecycle: 'follow_up', approvedRevision: current.minutes?.revision ?? null, followUpItemIds: Array.isArray(body.followUpItemIds) ? body.followUpItemIds : [], minutesStale: false })
+      const nextStamp = String(body.updatedAt ?? stamp)
+      setUpdatedAt(nextStamp)
+      saverRef.current?.adopt(nextStamp)
+      setTab('follow-up')
+    } catch {
+      setError(meetingRequestError())
+    } finally {
+      setBusy(false)
     }
-    const returned = Array.isArray(body.followUps) ? body.followUps.flatMap((item: unknown) => { const summary = workSummary(item); return summary ? [summary] : [] }) : []
-    if (returned.length) setSavedWork(returned)
-    setCore((current) => body.meeting ?? { ...current, lifecycle: 'follow_up', approvedRevision: current.minutes?.revision ?? null, followUpItemIds: Array.isArray(body.followUpItemIds) ? body.followUpItemIds : [], minutesStale: false })
-    const nextStamp = String(body.updatedAt ?? stamp)
-    setUpdatedAt(nextStamp)
-    saverRef.current?.adopt(nextStamp)
-    setTab('follow-up')
   }
 
   const nextStage: MeetingLifecycle | null = core.lifecycle === 'scheduled' ? 'preparing' : core.lifecycle === 'preparing' ? 'ready' : core.lifecycle === 'ready' ? 'in_progress' : core.lifecycle === 'in_progress' ? 'minutes_review' : core.lifecycle === 'follow_up' ? 'closed' : null
@@ -249,7 +268,7 @@ export function MeetingWorkspace({ meetingId, founderId, title, updatedAt: initi
           <span className="meeting-badge">{company?.name}</span>
           <span className="meeting-badge">{getSystem(core.systemId)?.name}</span>
           <span className="meeting-badge is-neutral">{lifecycleLabel(core.lifecycle)}</span>
-          <span className="meeting-badge is-neutral">{timeLabel || 'No date saved'}</span>
+          <span className="meeting-badge is-neutral">{meetingTimeLabel(core) || 'No date saved'}</span>
         </div>
       </header>
       {recovery ? <div className="meeting-recovery" role="status"><p>Unsaved notes from this device were kept. The meeting changed, so they were not put back.</p><button className="pivot-button-secondary" type="button" onClick={restoreRecovery}>Restore unsaved notes</button></div> : null}
@@ -332,7 +351,7 @@ export function MeetingWorkspace({ meetingId, founderId, title, updatedAt: initi
         <div className="meeting-card meeting-panel">
           <p>Review the minutes and actions together. Follow-up work is created only after this approval.</p>
           <button className="pivot-button" type="button" disabled={busy || !core.minutes || core.minutesStale || core.minutes.evidence === 'none'} onClick={() => void approve()}>{core.approvedRevision === core.minutes?.revision ? 'Review already saved' : 'Approve reviewed follow-up'}</button>
-          {savedWork.length ? <ul className="meeting-follow">{savedWork.map((item) => <li key={item.id}><Link href={workRecordHref(item.id)}>{item.title}</Link><span className="meeting-badge is-neutral">{workStatusLabel(item.status)}</span></li>)}</ul> : <p>Approved follow-up opens here with its title and status.</p>}
+          {savedWork.length ? <ul className="meeting-follow">{savedWork.map((item) => <li key={item.id}><Link href={workRecordHref(item.id)}>{item.title}</Link><span className="meeting-badge is-neutral">{workStatusLabel(item.status, item.reviewed)}</span></li>)}</ul> : <p>Approved follow-up opens here with its title and status.</p>}
           {core.followUpItemIds.length > savedWork.length ? <p>Some saved work could not be opened.</p> : null}
           <ul className="meeting-pending">
             <li>Google Calendar sync is not connected. Confirmed times stay in Pivot. Invitations are not sent.</li>

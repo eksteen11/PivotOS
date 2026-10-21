@@ -12,6 +12,7 @@ const core = createMeetingCore({
 })
 
 const flow = new URLSearchParams(window.location.search).get('flow') === '1'
+const failNetwork = new URLSearchParams(window.location.search).get('fail') === '1'
 const calls: { url: string; updatedAt: string }[] = []
 let current: MeetingCore = structuredClone(core)
 let stamp = '2026-10-21T12:00:00.000Z'
@@ -21,6 +22,7 @@ function json(status: number, body: unknown) {
 }
 
 window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+  if (failNetwork) throw new TypeError('network down')
   const url = String(input)
   const body = init?.body ? JSON.parse(String(init.body)) as { updatedAt?: string; patch?: { liveNotes?: string; meetingTranscript?: string } } : {}
   calls.push({ url, updatedAt: String(body.updatedAt ?? '') })
@@ -38,7 +40,7 @@ window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   if (url.includes('/approve')) {
     stamp = `2026-10-21T12:00:0${calls.length}.000Z`
     current = { ...current, lifecycle: 'follow_up', approvedRevision: 1, followUpItemIds: ['bbbbbbbb-bbbb-4ccc-8ddd-eeeeeeeeeeee'], minutesStale: false }
-    return json(200, { meeting: current, updatedAt: stamp, followUpItemIds: current.followUpItemIds, followUps: [{ id: 'bbbbbbbb-bbbb-4ccc-8ddd-eeeeeeeeeeee', title: 'Confirm prices', status: 'planned' }] })
+    return json(200, { meeting: current, updatedAt: stamp, followUpItemIds: current.followUpItemIds, followUps: [{ id: 'bbbbbbbb-bbbb-4ccc-8ddd-eeeeeeeeeeee', title: 'Confirm prices', status: 'planned', reviewed: true, source: 'meeting-follow-up' }] })
   }
   stamp = `2026-10-21T12:00:0${calls.length}.000Z`
   current = { ...current, liveNotes: String(body.patch?.liveNotes ?? current.liveNotes), meetingTranscript: String(body.patch?.meetingTranscript ?? current.meetingTranscript) }
@@ -53,7 +55,6 @@ export function Harness() {
       title="Listing visit"
       updatedAt="2026-10-21T12:00:00.000Z"
       core={core}
-      timeLabel=""
       sourceHref="/api/intake/source/0d0f0d0f-1111-4111-8111-0d0f0d0f0d0f"
     />
   )

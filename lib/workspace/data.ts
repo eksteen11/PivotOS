@@ -105,12 +105,12 @@ export async function readOwnedWorkSummaries(ids: string[]) {
   const sb = await createClient()
   const { data: { user } } = await sb.auth.getUser()
   if (!user) return []
-  const { data } = await sb.from('items').select('id,title,status').in('id', unique).eq('user_id', user.id).is('deleted_at', null)
+  const { data } = await sb.from('items').select('id,title,status,source').in('id', unique).eq('user_id', user.id).is('deleted_at', null)
   return (data ?? []).flatMap((row) => {
     const status = String(row.status ?? '')
     const title = String(row.title ?? '').trim()
     if (!WORK_STATUSES.has(status as WorkCase['status']) || !title) return []
-    return [{ id: String(row.id), title: title.slice(0, 180), status: status as WorkCase['status'] }]
+    return [{ id: String(row.id), title: title.slice(0, 180), status: status as WorkCase['status'], reviewed: String(row.source ?? '') === 'meeting-follow-up' }]
   })
 }
 
