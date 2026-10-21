@@ -1,27 +1,10 @@
 import { NextResponse } from 'next/server'
 
 import { openaiApiKey, openaiTranscribeModel } from '@/lib/env'
+import { openAiAudioPart } from '@/lib/intake/audio'
 import { requireFounderSession, sameOrigin, withTimeout } from '@/lib/intake/server'
 
 const MAX_AUDIO_BYTES = 3 * 1024 * 1024
-const SUPPORTED_AUDIO_MIME = new Set([
-  'audio/mpeg',
-  'audio/mp4',
-  'audio/mpga',
-  'audio/m4a',
-  'audio/wav',
-  'audio/webm',
-  'video/mp4',
-])
-const SUPPORTED_EXTENSIONS = new Set(['mp3', 'mp4', 'mpeg', 'mpga', 'm4a', 'wav', 'webm'])
-
-function extension(name: string) {
-  const index = name.lastIndexOf('.')
-  return index >= 0 ? name.slice(index + 1).toLowerCase() : ''
-}
-function normalizeMime(value: string) {
-  return value.split(';')[0].trim().toLowerCase()
-}
 
 export async function POST(request: Request) {
   if (!sameOrigin(request)) {
@@ -43,19 +26,13 @@ export async function POST(request: Request) {
   if (!file.size || file.size > MAX_AUDIO_BYTES) {
     return NextResponse.json({ error: 'Audio must be greater than 0 bytes and below 3MB.' }, { status: 400 })
   }
-  const fileExt = extension(file.name)
-  if (!SUPPORTED_EXTENSIONS.has(fileExt) || !SUPPORTED_AUDIO_MIME.has(normalizeMime(file.type))) {
-    return NextResponse.json(
-      {
-        error:
-          'Unsupported audio format. Use mp3, mp4, mpeg, mpga, m4a, wav, or webm. WhatsApp .ogg/.opus is not accepted here unless converted first.',
-      },
-      { status: 400 },
-    )
+  const uploadPlan = await openAiAudioPart(file)
+  if (!uploadPlan.ok) {
+    return NextResponse.json({ error: uploadPlan.error }, { status: 400 })
   }
 
   const outgoing = new FormData()
-  outgoing.set('file', file, file.name)
+  outgoing.set('file', uploadPlan.file, uploadPlan.uploadName)
   outgoing.set('model', openaiTranscribeModel)
   outgoing.set('response_format', 'text')
   const hints = String(form?.get('vocabularyHints') ?? '').trim().slice(0, 400)
@@ -82,8 +59,9 @@ export async function POST(request: Request) {
       transcript,
       metadata: {
         model: openaiTranscribeModel,
-        mimeType: file.type,
-        fileName: file.name,
+        mimeType: uploadPlan.mimeType,
+        fileName: uploadPlan.originalName,
+        uploadFileName: uploadPlan.uploadName,
         sizeBytes: file.size,
         retainedAudio: false,
       },

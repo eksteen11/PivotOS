@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { WorkCase } from '@/lib/workspace/model'
 import type { Company } from '@/lib/workspace/catalogue'
 import { companies, getCompany, systems, systemFitsCompany } from '@/lib/workspace/catalogue'
+import { AUDIO_FILE_ACCEPT, assessAudioUpload, normalizeMime, UNSUPPORTED_AUDIO_ERROR } from '@/lib/intake/audio'
 import { intakeSourceLabels, toSastIso, type IntakeProposal, type IntakeQuestion, type IntakeSourceLabel } from '@/lib/intake/shared'
 import { Dialog } from './WorkDialog'
 import { PivotIcon } from './PivotIcon'
@@ -13,8 +14,13 @@ type Meeting = { id: string; title: string; company: string; timeLabel: string; 
 
 const MAX_UPLOAD_BYTES = 3 * 1024 * 1024
 const MAX_DURATION_SECONDS = 120
-const SUPPORTED_MIME = new Set(['audio/mpeg', 'audio/mp4', 'audio/mpga', 'audio/m4a', 'audio/wav', 'audio/webm', 'video/mp4'])
 const UNAVAILABLE_TEXT = 'Sign-in is temporarily unavailable. Please try again shortly.'
+
+export function AudioUploadStatus({ fileName, phase, progress }: { fileName: string; phase: 'idle' | 'processing' | 'ready'; progress: number }) {
+  if (!fileName || phase === 'idle') return null
+  const detail = phase === 'ready' ? 'Transcript ready' : `Processing · ${Math.max(0, Math.min(100, Math.round(progress)))}%`
+  return <p role="status" className="pivot-notice">{fileName} · {detail}</p>
+}
 const DRAFT_KEY = 'pivotos:intake-draft:v1'
 
 type Clarification = { field: string; answer: string }
@@ -38,6 +44,34 @@ async function getDurationSeconds(file: File) {
       done(null)
     }
     audio.src = url
+  })
+}
+
+function postTranscription(file: File, hints: string, onProgress: (progress: number) => void) {
+  return new Promise<{ ok: true; transcript: string; metadata?: unknown } | { ok: false; error: string }>((resolve) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', '/api/intake/transcribe')
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100))
+    }
+    xhr.onerror = () => resolve({ ok: false, error: 'Transcription request failed.' })
+    xhr.onload = () => {
+      let body: { transcript?: string; metadata?: unknown; error?: string } = {}
+      try {
+        body = JSON.parse(xhr.responseText || '{}') as { transcript?: string; metadata?: unknown; error?: string }
+      } catch {
+        body = {}
+      }
+      if (xhr.status < 200 || xhr.status >= 300) {
+        resolve({ ok: false, error: String(body.error ?? 'Transcription failed.') })
+        return
+      }
+      resolve({ ok: true, transcript: String(body.transcript ?? ''), metadata: body.metadata })
+    }
+    const form = new FormData()
+    form.set('audio', file, file.name)
+    if (hints) form.set('vocabularyHints', hints)
+    xhr.send(form)
   })
 }
 
@@ -82,6 +116,9 @@ export function IntakeComposerDialog({
   const [captureId, setCaptureId] = useState(() => crypto.randomUUID())
   const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID())
   const [audioMeta, setAudioMeta] = useState<Record<string, unknown>>({ retainedAudio: false })
+  const [uploadName, setUploadName] = useState('')
+  const [uploadPhase, setUploadPhase] = useState<'idle' | 'processing' | 'ready'>('idle')
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [vocabularyHints, setVocabularyHints] = useState('')
   const recorderRef = useRef<MediaRecorder | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -153,16 +190,9 @@ export function IntakeComposerDialog({
     }
   }, [sourceLabel, transcript, language, summary, questions, clarifications, proposals, removedProposalIds, captureId, idempotencyKey, analysisStale, draftKey])
 
-  function normalizeMime(mime: string) {
-    return mime.split(';')[0].trim().toLowerCase()
-  }
-
   async function validateAudioFile(file: File) {
-    if (!SUPPORTED_MIME.has(normalizeMime(file.type))) {
-      throw new Error(
-        'Unsupported audio format. Use mp3, mp4, mpeg, mpga, m4a, wav, or webm. WhatsApp .ogg/.opus must be converted first.',
-      )
-    }
+    const assessment = assessAudioUpload(file.name, file.type)
+    if (!assessment.ok) throw new Error(assessment.error || UNSUPPORTED_AUDIO_ERROR)
     if (!file.size || file.size > MAX_UPLOAD_BYTES) {
       throw new Error('Audio must be greater than 0 bytes and below 3MB.')
     }
@@ -175,17 +205,14 @@ export function IntakeComposerDialog({
 
   async function transcribeFile(file: File) {
     const duration = await validateAudioFile(file)
+    setUploadName(file.name)
+    setUploadPhase('processing')
+    setUploadProgress(0)
     setStatus('transcribing')
     setError('')
     setNotice('')
-    const form = new FormData()
-    form.set('audio', file, file.name)
-    if (vocabularyHints.trim()) form.set('vocabularyHints', vocabularyHints.trim().slice(0, 400))
-    const response = await fetch('/api/intake/transcribe', { method: 'POST', body: form })
-    const body = await response.json().catch(() => ({}))
-    if (!response.ok) {
-      throw new Error(String(body.error ?? 'Transcription failed.'))
-    }
+    const body = await postTranscription(file, vocabularyHints.trim().slice(0, 400), setUploadProgress)
+    if (!body.ok) throw new Error(body.error)
     setTranscript(String(body.transcript ?? ''))
     setAnalysisStale(true)
     setAudioMeta({
@@ -193,6 +220,8 @@ export function IntakeComposerDialog({
       durationSeconds: duration ?? null,
       retainedAudio: false,
     })
+    setUploadPhase('ready')
+    setUploadProgress(100)
     setNotice('Transcript loaded. Review and edit before analysis.')
   }
 
@@ -201,6 +230,7 @@ export function IntakeComposerDialog({
     try {
       await transcribeFile(file)
     } catch (uploadError) {
+      setUploadPhase('idle')
       setError(uploadError instanceof Error ? uploadError.message : 'Audio upload failed.')
     } finally {
       setStatus('idle')
@@ -236,6 +266,7 @@ export function IntakeComposerDialog({
         try {
           await transcribeFile(file)
         } catch (recordError) {
+          setUploadPhase('idle')
           setError(recordError instanceof Error ? recordError.message : 'Recording transcription failed.')
         } finally {
           setStatus('idle')
@@ -430,7 +461,8 @@ export function IntakeComposerDialog({
             <input
               ref={fileRef}
               type="file"
-              accept=".mp3,.mp4,.mpeg,.mpga,.m4a,.wav,.webm,audio/mpeg,audio/mp4,audio/mpga,audio/m4a,audio/wav,audio/webm,video/mp4"
+              accept={AUDIO_FILE_ACCEPT}
+              disabled={status !== 'idle'}
               onChange={(e) => {
                 const file = e.target.files?.[0]
                 void onUpload(file)
@@ -438,8 +470,9 @@ export function IntakeComposerDialog({
             />
             Upload a recording
           </label>
-          <small>Up to 2 minutes · 3MB. Your transcript is saved; the audio file isn’t retained.</small>
+          <small>Up to 2 minutes · 3MB. WhatsApp .opus voice notes are accepted. The audio file isn’t retained.</small>
         </div>
+        <AudioUploadStatus fileName={uploadName} phase={uploadPhase} progress={uploadProgress} />
         <label className="pivot-intake-main-composer">
           Tell Pivot what happened
           <textarea
