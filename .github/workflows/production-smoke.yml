@@ -50,8 +50,9 @@ jobs:
               exit 0
             fi
 
-            if [[ "$production_environment" != "true" ]]; then
-              echo "Deployment is not marked as production (environment='$environment'). Skipping."
+            env_lc="$(printf '%s' "$environment" | tr '[:upper:]' '[:lower:]')"
+            if [[ "$production_environment" != "true" && "$env_lc" != "production" ]]; then
+              echo "Deployment is not marked as production (production_environment='$production_environment', environment='$environment'). Skipping."
               echo "should_run=false" >> "$GITHUB_OUTPUT"
               exit 0
             fi
