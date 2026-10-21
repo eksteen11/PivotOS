@@ -1,18 +1,14 @@
-import { redirect } from 'next/navigation'
-
 import { AppNav } from '@/components/shell/AppNav'
 import { AppSidebar } from '@/components/shell/AppSidebar'
 import { MobileChrome } from '@/components/shell/MobileChrome'
 import { SyncRunner } from '@/components/providers/SyncRunner'
+import { requireFounder } from '@/lib/auth/requireFounder'
 import { getEntities } from '@/lib/data/queries'
-import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const sb = await createClient()
-  const { data: { user } } = await sb.auth.getUser()
-  if (!user) redirect('/login')
+  const user = await requireFounder()
   const entities = await getEntities()
 
   return (

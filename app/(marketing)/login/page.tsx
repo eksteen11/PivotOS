@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useState } from 'react'
 
@@ -76,7 +77,7 @@ function LoginForm() {
       <button type="submit" className="btn-primary w-full" disabled={busy}>
         {busy ? 'Entering…' : 'Enter system →'}
       </button>
-      <p className="text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-muted">Private founder access</p>
+      <Link href="/register" className="block text-center text-sm font-semibold text-accent">Create the founder account</Link>
     </form>
   )
 }
@@ -87,8 +88,7 @@ export default function LoginPage() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_25%,rgba(23,114,75,0.10),transparent_28rem),radial-gradient(circle_at_20%_75%,rgba(214,205,184,0.36),transparent_24rem)]" />
       <section className="relative z-10 flex w-full max-w-sm flex-col justify-between gap-16 sm:justify-center">
         <div className="pt-8 text-center sm:pt-0">
-          <p className="text-6xl font-extrabold tracking-[-0.09em] text-ink sm:text-7xl">PIVOT</p>
-          <p className="mt-4 text-[10px] font-semibold uppercase tracking-[0.36em] text-accent">Clear Horizon OS</p>
+          <Link href="/" className="text-5xl font-extrabold tracking-[-0.06em] text-ink">Pivot OS</Link>
         </div>
         <Suspense>
           <LoginForm />

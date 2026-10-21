@@ -14,6 +14,7 @@ const APP_PREFIXES = [
   '/more',
   '/activity',
   '/meetings',
+  '/calendar',
   '/contacts',
   '/documents',
   '/workspaces',
@@ -49,11 +50,18 @@ export async function updateSession(request: NextRequest) {
   const path = request.nextUrl.pathname
   const isApp = APP_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))
 
-  if (path === '/register') {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    url.search = ''
-    return NextResponse.redirect(url)
+  if (user && isApp) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    if (profile?.role !== 'founder') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/closed'
+      url.search = ''
+      return NextResponse.redirect(url)
+    }
   }
 
   if (!user && isApp) {

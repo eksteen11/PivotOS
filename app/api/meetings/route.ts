@@ -17,6 +17,9 @@ export async function POST(request: Request) {
   const { data: { user } } = await sb.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const people = String(body.people ?? '').trim()
+  const link = String(body.link ?? '').trim()
+  const place = String(body.place ?? '').trim()
   const { data: meeting, error } = await sb.from('items').insert({
     user_id: user.id,
     entity_id: entityId,
@@ -26,7 +29,12 @@ export async function POST(request: Request) {
     content,
     source: 'manual',
     due_at: typeof body.due_at === 'string' && body.due_at ? body.due_at : null,
-    meta: { prep: [] },
+    meta: {
+      prep: [],
+      ...(people ? { people } : {}),
+      ...(link ? { link } : {}),
+      ...(place ? { place } : {}),
+    },
   }).select('id,entity_id').single()
 
   if (error || !meeting) return NextResponse.json({ error: error?.message ?? 'Could not save meeting' }, { status: 400 })

@@ -1,70 +1,23 @@
+'use client'
 import Link from 'next/link'
-
-export function PivotLanding() {
-  return (
-    <>
-      <header className="sticky top-0 z-50 border-b border-black/[0.06] bg-surface/90 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-3.5">
-          <Link href="/" className="text-sm font-bold tracking-tight">Pivot OS</Link>
-          <Link href="/login" className="btn-primary">Enter system</Link>
-        </div>
-      </header>
-
-      <section className="relative overflow-hidden px-5 pb-20 pt-16 sm:pt-24">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_12%,rgba(23,114,75,0.10),transparent_28rem),radial-gradient(circle_at_12%_70%,rgba(214,205,184,0.36),transparent_24rem)]" />
-        <div className="relative mx-auto max-w-3xl text-center">
-          <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-accent">Clear Horizon OS</p>
-          <h1 className="mt-5 text-5xl font-extrabold leading-[0.95] tracking-[-0.05em] sm:text-7xl">PIVOT</h1>
-          <p className="mx-auto mt-6 max-w-xl text-base leading-7 text-muted sm:text-lg">
-            DJ Eksteen&apos;s founder operating system. Capture what arrives, let AI prepare, approve what matters, then execute.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Link href="/login" className="btn-primary px-6">Enter your system</Link>
-            <p className="text-sm text-muted">Private founder access. No public signup.</p>
-          </div>
-        </div>
-      </section>
-
-      <section className="border-t border-black/[0.06] px-5 py-16">
-        <div className="mx-auto grid max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { title: 'Command Centre', desc: 'What needs you now across all businesses.' },
-            { title: 'Universal Inbox', desc: 'Capture first. Classify and convert next.' },
-            { title: 'Approvals', desc: 'One consequential decision at a time.' },
-            { title: 'AI Workforce', desc: 'Agents propose. You remain the gate.' },
-          ].map((item) => (
-            <article key={item.title} className="rounded-2xl border border-black/[0.07] bg-white/80 p-5">
-              <h2 className="font-semibold">{item.title}</h2>
-              <p className="mt-2 text-sm leading-6 text-muted">{item.desc}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="border-t border-black/[0.06] px-5 py-16">
-        <div className="mx-auto max-w-3xl">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-accent">Honest status</p>
-          <h2 className="mt-3 text-3xl font-extrabold tracking-tight">Built for daily command. Not a finished SaaS yet.</h2>
-          <ul className="mt-6 space-y-3 text-sm leading-6 text-muted">
-            <li>Live today: inbox capture, classification, approvals, meetings notes, processes, agents and an operating map.</li>
-            <li>Northpoint is the first commercial lane. Other business lanes stay marked not built until they are real.</li>
-            <li>Gmail, WhatsApp send, calendar sync and money movement are not connected. Nothing is marked sent unless it actually sent.</li>
-            <li>Offline capture is local only. Approvals require a connection.</li>
-          </ul>
-        </div>
-      </section>
-
-      <section className="border-t border-black/[0.06] bg-white/70 px-5 py-16 text-center">
-        <h2 className="text-3xl font-extrabold tracking-tight">One account. All your businesses.</h2>
-        <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-muted">
-          DJ Private, Digikraal, Farm Feed and Northpoint stay inside this Pivot account. Future customers will get isolated tenants.
-        </p>
-        <Link href="/login" className="btn-primary mt-8">Founder access</Link>
-      </section>
-
-      <footer className="border-t border-black/[0.06] px-5 py-8 text-center text-xs text-muted">
-        © {new Date().getFullYear()} Pivot OS · Private founder workspace
-      </footer>
-    </>
-  )
+import { useState } from 'react'
+import { companies, systems, type Company } from '@/lib/workspace/catalogue'
+import { PivotIcon, PivotMark } from '@/components/workspace/PivotIcon'
+const examples: Record<Company, { title: string; task: string; steps: string[] }> = {
+  digikraal: { title: 'A seller calls. The whole job comes together.', task: 'Prepare a cattle seller’s farm visit', steps: ['Capture the conversation', 'Prepare the visit', 'Review the listing', 'Follow the deal through'] },
+  northpoint: { title: 'From a new listing to a well-run opportunity.', task: 'Prepare a farm listing and viewing', steps: ['Qualify the opportunity', 'Collect property details', 'Match the right buyers', 'Track offers and transfer'] },
+  'farm-feed': { title: 'The right supply. The full picture.', task: 'Match an oat hay enquiry to supply', steps: ['Capture the requirement', 'Confirm quality and units', 'Review delivered pricing', 'Track loading and outcome'] },
+  personal: { title: 'Room for your life, as well as your work.', task: 'Make space for this week’s priorities', steps: ['Capture what matters', 'Choose the next move', 'Keep commitments visible', 'Reflect and improve'] },
+}
+export function PivotLanding({ signedIn }: { signedIn: boolean }) {
+  const [company, setCompany] = useState<Company>('digikraal')
+  const selected = companies.find((c) => c.id === company)!
+  const example = examples[company]
+  return <div className="pivot-landing"><header className="pivot-landing-header"><Link href="/" className="pivot-logo"><PivotMark /><span>pivot<span className="pivot-logo-os">os</span></span></Link><nav aria-label="Page navigation"><a href="#how-it-works">How it works</a><a href="#your-businesses">Your businesses</a><a href="#the-workforce">The AI workforce</a></nav><div className="pivot-header-actions">{signedIn ? <Link className="pivot-button" href="/today">Open my desk <PivotIcon name="arrow" size={16} /></Link> : <><Link className="pivot-login-link" href="/login">Sign in</Link><Link className="pivot-button" href="/register">Founder access <PivotIcon name="arrow" size={16} /></Link></>}</div></header><main>
+    <section className="pivot-hero"><div className="pivot-hero-eyebrow"><span />YOUR PERSONAL BUSINESS OPERATING SYSTEM</div><h1>Your whole world.<br /><span>One clear desk.</span></h1><p>Four businesses. A thousand moving parts.<br className="pivot-desktop-break" /> One place to bring it all together—with an AI workforce by your side.</p><div className="pivot-hero-actions"><Link className="pivot-button pivot-button-large" href={signedIn ? '/today' : '/preview'}>{signedIn ? 'Open my desk' : 'Explore the desk'}<PivotIcon name="arrow" size={20} /></Link><a href="#how-it-works" className="pivot-quiet-link">See how it works <span>↘</span></a></div><div className="pivot-hero-note"><PivotIcon name="lock" size={13} />Founder private <span>·</span> You stay in control</div><div className="pivot-company-switch" role="group" aria-label="Preview a business">{companies.map((c) => <button aria-pressed={company === c.id} key={c.id} className={company === c.id ? 'is-active' : ''} onClick={() => setCompany(c.id)}><span className="pivot-switch-icon" style={{ color: c.color, background: `${c.color}13` }}>{c.short}</span>{c.name}<span className="pivot-switch-check">{company === c.id ? '✓' : '+'}</span></button>)}</div>
+    <div className="pivot-product-stage"><div className="pivot-floating-label"><PivotIcon name="workforce" size={17} />Less juggling. More moving forward.</div><div className="pivot-product-window"><div className="pivot-window-chrome"><span><i /><i /><i /></span><strong>YOUR FOUNDER WORKSPACE</strong><span className="pivot-preview-caption">Design preview</span></div><div className="pivot-product-body"><aside><PivotMark /><span className="is-selected"><PivotIcon name="desk" size={16} />My desk</span><span><PivotIcon name="inbox" size={16} />Inboxes</span><span><PivotIcon name="work" size={16} />Work</span><span><PivotIcon name="calendar" size={16} />Calendar</span><span><PivotIcon name="workforce" size={16} />Workforce</span><small>FOUR BUSINESSES.<br />ONE CONNECTED WORLD.</small></aside><div className="pivot-product-content" key={company}><div className="pivot-product-greeting"><div><small>YOUR NEXT MOVE, IN FOCUS</small><h2>{example.title}</h2></div><span className="pivot-small-avatar">DE</span></div><div className="pivot-product-scope"><span style={{ background: selected.color }} />{selected.name}<span>/</span>Needs Drikus</div><div className="pivot-preview-work"><div className="pivot-preview-work-icon" style={{ color: selected.color, background: `${selected.color}12` }}><PivotIcon name="work" size={25} /></div><div><small>WORK PLAN · READY TO REVIEW</small><h3>{example.task}</h3><p>Original context, missing details and a clear next action.</p></div><span className="pivot-status is-planned">Your approval</span></div><div className="pivot-preview-steps">{example.steps.map((step, i) => <div key={step}><span>{String(i + 1).padStart(2, '0')}</span><strong>{step}</strong><small>{i === 0 ? 'Keep the context' : i === 1 ? 'Know what’s missing' : i === 2 ? 'Decide with clarity' : 'Save the outcome'}</small></div>)}</div><div className="pivot-preview-bottom"><span><PivotIcon name="lock" size={15} />Nothing goes out without your approval.</span><Link href="/preview">Try the workspace <PivotIcon name="arrow" size={16} /></Link></div></div></div></div><div className="pivot-stage-caption"><span className="pivot-business-dot" />Designed around your real work. Connections are being built.</div></div></section>
+    <section className="pivot-how-section" id="how-it-works"><div className="pivot-section-intro"><p className="pivot-eyebrow">THE WAY WORK SHOULD FLOW</p><h2>From “can you help?”<br />to “it’s taken care of.”</h2><p>Keep the conversation, the plan and the outcome connected. Stop rebuilding the context every time you switch apps.</p></div><div className="pivot-flow-cards">{[{ n: '01', name: 'Bring it in.', icon: 'inbox', color: 'blue', text: 'WhatsApp, email, a call or a thought. Capture the work with its original context.' }, { n: '02', name: 'Make a plan.', icon: 'systems', color: 'green', text: 'The right business, the right system, the missing details and a practical next step.' }, { n: '03', name: 'You decide.', icon: 'check', color: 'amber', text: 'Review the plan and each outgoing action. Keep the judgement that makes the work yours.' }, { n: '04', name: 'Move it forward.', icon: 'workforce', color: 'violet', text: 'Track what happened, follow up on promises and carry the lessons into the next job.' }].map((f) => <article key={f.n} className={`tone-${f.color}`}><div><span className="pivot-flow-icon"><PivotIcon name={f.icon} size={25} /></span><small>{f.n}</small></div><h3>{f.name}</h3><p>{f.text}</p></article>)}</div></section>
+    <section className="pivot-world-section" id="your-businesses"><div className="pivot-section-intro"><p className="pivot-eyebrow">YOUR BUSINESSES. THEIR OWN CONTEXT.</p><h2>One Drikus.<br />A world of possibilities.</h2><p>Eleven connected systems, shaped around the workflows you already use.</p></div><div className="pivot-world-grid">{companies.map((c) => <article key={c.id}><span className="pivot-company-monogram" style={{ color: c.color, background: `${c.color}13` }}>{c.short}</span><h3>{c.name}</h3><p>{systems.filter((s) => s.company === c.id).map((s) => s.name).join(' · ')}</p><Link href="/preview">Explore the workspace <PivotIcon name="arrow" size={17} /></Link></article>)}</div></section>
+    <section className="pivot-learning-section" id="the-workforce"><div className="pivot-learning-visual"><div className="pivot-orbit orbit-one" /><div className="pivot-orbit orbit-two" /><div className="pivot-learning-core"><PivotIcon name="workforce" size={44} /></div><span className="pivot-learning-tag tag-one">Context</span><span className="pivot-learning-tag tag-two">Reviewed lessons</span><span className="pivot-learning-tag tag-three">Better playbooks</span><span className="pivot-learning-tag tag-four">Real outcomes</span></div><div><p className="pivot-eyebrow">A WORKFORCE THAT BUILDS ON EXPERIENCE</p><h2>Do the work.<br />Keep the wisdom.</h2><p>The plan is a coordinated chief of staff and specialist agents that learn from reviewed corrections and real outcomes. Useful knowledge stays with the right business.</p><p>Start with captured work and proposed lessons. Build toward tested playbooks, connected tools and accountable execution.</p><Link href="/preview" className="pivot-button">Meet your future workforce <PivotIcon name="arrow" size={18} /></Link></div></section><section className="pivot-final-cta"><span className="pivot-eyebrow">BUILT AROUND THE WAY YOU WORK</span><h2>Let’s make room<br />for what’s next.</h2><Link href={signedIn ? '/today' : '/preview'} className="pivot-button pivot-button-large">{signedIn ? 'Open my desk' : 'Step inside Pivot OS'} <PivotIcon name="arrow" size={20} /></Link><p>Interactive sample available. WhatsApp, email and AI execution are not connected yet.</p></section>
+  </main><footer className="pivot-landing-footer"><Link className="pivot-logo" href="/"><PivotMark /><span>pivot<span className="pivot-logo-os">os</span></span></Link><span>Your world, connected.</span><span>Private founder workspace</span></footer></div>
 }

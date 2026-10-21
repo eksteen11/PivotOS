@@ -13,7 +13,7 @@ const config: Config = {
         warn: '#d7662f',
       },
       fontFamily: {
-        sans: ['var(--font-manrope)', 'system-ui', 'sans-serif'],
+        sans: ['Manrope', 'Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
       },
       boxShadow: {
         deck: '0 1px 2px rgba(30,38,29,0.04), 0 10px 30px rgba(30,38,29,0.05)',

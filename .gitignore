@@ -11,6 +11,8 @@ node_modules
 dist
 dist-ssr
 .next
+.next-*/
+.cursor/mcp.json
 *.local
 
 # Editor directories and files

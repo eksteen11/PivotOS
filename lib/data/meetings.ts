@@ -10,7 +10,7 @@ export type MeetingItem = {
   entities?: { slug: string; name: string } | null
 }
 
-export async function getMeetings(entityIds?: string[]): Promise<MeetingItem[]> {
+export async function getMeetings(entityIds?: string[], range?: { start: string; end: string }): Promise<MeetingItem[]> {
   const sb = await createClient()
   let q = sb
     .from('items')
@@ -19,6 +19,7 @@ export async function getMeetings(entityIds?: string[]): Promise<MeetingItem[]> 
     .is('deleted_at', null)
     .order('due_at', { ascending: true })
     .limit(50)
+  if (range) q = q.gte('due_at', range.start).lt('due_at', range.end)
   if (entityIds?.length) q = q.in('entity_id', entityIds)
   const { data } = await q
   return (data ?? []) as unknown as MeetingItem[]

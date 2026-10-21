@@ -1,12 +1,10 @@
 import type { Viewport } from 'next'
-import { Manrope } from 'next/font/google'
 
 import { ServiceWorkerRegistration } from '@/components/providers/ServiceWorkerRegistration'
 
 import { siteMetadata } from './site-metadata'
 import './globals.css'
-
-const manrope = Manrope({ subsets: ['latin'], variable: '--font-manrope' })
+import './pivot.css'
 
 export const metadata = siteMetadata
 export const viewport: Viewport = {
@@ -19,7 +17,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${manrope.variable} font-sans`}>
+      <body className="font-sans">
         {children}
         <ServiceWorkerRegistration />
       </body>

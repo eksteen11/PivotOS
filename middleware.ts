@@ -15,6 +15,7 @@ export const config = {
     '/more/:path*',
     '/activity/:path*',
     '/meetings/:path*',
+    '/calendar/:path*',
     '/contacts/:path*',
     '/documents/:path*',
     '/workspaces/:path*',
