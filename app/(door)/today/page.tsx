@@ -1,6 +1,7 @@
 import { PivotWorkspace } from '@/components/workspace/PivotWorkspace'
 import { getMeetings } from '@/lib/data/meetings'
 import { toDoorMeetings, thisWeekRange } from '@/lib/door/meetings'
+import { createClient } from '@/lib/supabase/server'
 import { readWorkCases } from '@/lib/workspace/data'
 import type { WorkCase } from '@/lib/workspace/model'
 
@@ -33,6 +34,15 @@ export default async function TodayPage({
   let items: WorkCase[] = []
   let meetings: ReturnType<typeof asWorkspaceMeetings> = []
   let loadError = ''
+  let founderUserId = ''
+
+  try {
+    const sb = await createClient()
+    const { data: { user } } = await sb.auth.getUser()
+    founderUserId = user?.id ?? ''
+  } catch {
+    founderUserId = ''
+  }
 
   try {
     items = await readWorkCases()
@@ -47,5 +57,5 @@ export default async function TodayPage({
     loadError = loadError ? `${loadError} ${meetingError}` : meetingError
   }
 
-  return <PivotWorkspace initialCases={items} meetings={meetings} loadError={loadError} initialView={initialView} />
+  return <PivotWorkspace initialCases={items} meetings={meetings} loadError={loadError} initialView={initialView} founderUserId={founderUserId} />
 }

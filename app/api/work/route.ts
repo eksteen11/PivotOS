@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     const id = String(body.id ?? '')
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) throw new Error('A valid capture reference is required.')
     const now = new Date().toISOString()
-    const item: WorkCase = { ...input, id, entityId: entity.id, status: 'planned', source: 'Manual capture', updatedAt: now, facts: {}, checked: [], lessons: [], history: [{ at: now, text: 'Captured by Drikus. Work plan awaits approval.' }] }
+    const item: WorkCase = { ...input, id, entityId: entity.id, status: 'planned', source: 'Manual capture', updatedAt: now, kind: 'work', facts: {}, checked: [], lessons: [], history: [{ at: now, text: 'Captured by Drikus. Work plan awaits approval.' }] }
     const { data, error } = await auth.sb.from('items').insert({ id, user_id: auth.user.id, entity_id: entity.id, type: 'process', status: 'planned', source: 'manual', title: input.title, content: input.notes, due_at: input.due ? `${input.due}T12:00:00+02:00` : null, meta: { workspace_version: 1, pivot_case: item }, updated_at: now }).select('*').single()
     if (error?.code === '23505') {
       const { data: existing } = await auth.sb.from('items').select('*').eq('id', id).eq('user_id', auth.user.id).is('deleted_at', null).maybeSingle()

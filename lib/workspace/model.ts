@@ -1,9 +1,15 @@
 import { companies, getSystem, systemFitsCompany, type Company } from './catalogue'
 
 export type WorkStatus = 'planned' | 'in_progress' | 'waiting' | 'done'
-export type WorkCase = { id: string; entityId: string; company: Company; systemId: string; title: string; notes: string; due: string; status: WorkStatus; source: string; updatedAt: string; facts: Record<string, string>; checked: number[]; history: { at: string; text: string }[]; lessons: { text: string; status: 'proposed' }[] }
+export type WorkCaseKind = 'task' | 'project' | 'job' | 'build' | 'work' | 'idea' | 'note' | 'handoff' | 'outcome'
+export type WorkCase = { id: string; entityId: string; company: Company; systemId: string; title: string; notes: string; due: string; status: WorkStatus; source: string; updatedAt: string; facts: Record<string, string>; checked: number[]; history: { at: string; text: string }[]; lessons: { text: string; status: 'proposed' }[]; kind: WorkCaseKind; intake?: { sourceCaptureId: string; proposalKind: string; externalBlocked: boolean } }
 export type WorkInput = Pick<WorkCase, 'title' | 'notes' | 'company' | 'systemId' | 'due'>
 export const statusLabels: Record<WorkStatus, string> = { planned: 'Needs approval', in_progress: 'In progress', waiting: 'Waiting', done: 'Done' }
+export function caseSteps(work: Pick<WorkCase, 'kind' | 'title' | 'systemId'>) {
+  if (work.kind === 'task') return [work.title]
+  if (work.kind === 'note' || work.kind === 'idea' || work.kind === 'outcome') return []
+  return getSystem(work.systemId)?.steps ?? []
+}
 export function validateWorkInput(value: Record<string, unknown>): WorkInput {
   const title = typeof value.title === 'string' ? value.title.trim() : ''
   const notes = typeof value.notes === 'string' ? value.notes.trim() : ''
@@ -17,24 +23,29 @@ export function validateWorkInput(value: Record<string, unknown>): WorkInput {
 }
 export function applyWorkAction(current: WorkCase, action: Record<string, unknown>, now: string): WorkCase {
   const next: WorkCase = { ...current, facts: { ...current.facts }, checked: [...current.checked], lessons: [...current.lessons], history: [...current.history], updatedAt: now }
-  const system = getSystem(current.systemId)
-  if (!system) throw new Error('This workflow is unavailable.')
+  const systemSteps = caseSteps(current)
+  if (!systemSteps.length && action.kind !== 'approve' && action.kind !== 'lesson' && action.kind !== 'facts') {
+    throw new Error('This record is a saved reference and has no active checklist.')
+  }
   let text = ''
   if (action.kind === 'approve') {
     if (current.status !== 'planned') throw new Error('This work plan is already reviewed.')
-    next.status = 'in_progress'; text = 'Drikus approved the internal work plan. No external action was authorised.'
+    next.status = systemSteps.length ? 'in_progress' : 'done'
+    text = systemSteps.length ? 'Drikus approved the internal work plan. No external action was authorised.' : 'Drikus accepted this reference record. No work or external action was started.'
   } else if (action.kind === 'task') {
     if (current.status === 'planned' || current.status === 'done') throw new Error('Approve the work plan before updating tasks, or reopen completed work.')
     const index = Number(action.index)
-    if (!Number.isInteger(index) || index < 0 || index >= system.steps.length || typeof action.checked !== 'boolean') throw new Error('Choose a valid task.')
+    if (!Number.isInteger(index) || index < 0 || index >= systemSteps.length || typeof action.checked !== 'boolean') throw new Error('Choose a valid task.')
     next.checked = action.checked ? [...new Set([...current.checked, index])] : current.checked.filter((i) => i !== index)
-    text = `${action.checked ? 'Completed' : 'Reopened'}: ${system.steps[index]}`
+    text = `${action.checked ? 'Completed' : 'Reopened'}: ${systemSteps[index]}`
   } else if (action.kind === 'status') {
     if (!['in_progress', 'waiting', 'done'].includes(String(action.status)) || current.status === 'planned') throw new Error('Approve the work plan first.')
-    if (action.status === 'done' && current.checked.length !== system.steps.length) throw new Error('Complete each checklist step before closing this work.')
+    if (action.status === 'done' && current.checked.length !== systemSteps.length) throw new Error('Complete each checklist step before closing this work.')
     next.status = action.status as WorkStatus; text = `Work marked ${statusLabels[next.status].toLowerCase()}.`
   } else if (action.kind === 'facts') {
     if (!action.facts || typeof action.facts !== 'object' || Array.isArray(action.facts)) throw new Error('Add valid details.')
+    const system = getSystem(current.systemId)
+    if (!system) throw new Error('This workflow is unavailable.')
     for (const [key, value] of Object.entries(action.facts)) {
       if (!system.fields.includes(key) || typeof value !== 'string' || value.length > 2000) throw new Error('One of the detail fields is invalid.')
       next.facts[key] = value.trim()
@@ -50,7 +61,7 @@ export function applyWorkAction(current: WorkCase, action: Record<string, unknow
   return next
 }
 export function sampleCases(): WorkCase[] {
-  const base = { entityId: '', notes: '', due: '', source: 'Sample · manual capture', updatedAt: '2026-10-20T14:00:00.000Z', checked: [], facts: {}, history: [{ at: '2026-10-20T14:00:00.000Z', text: 'Illustrative case created. No real appointment, message or transaction.' }], lessons: [] } satisfies Partial<WorkCase>
+  const base = { entityId: '', notes: '', due: '', source: 'Sample · manual capture', updatedAt: '2026-10-20T14:00:00.000Z', checked: [], facts: {}, history: [{ at: '2026-10-20T14:00:00.000Z', text: 'Illustrative case created. No real appointment, message or transaction.' }], lessons: [], kind: 'work' as const } satisfies Partial<WorkCase>
   return [
     { ...base, id: 'sample-cattle', company: 'digikraal', systemId: '005', title: 'CP van der Merwe · Angus cows & calves', notes: 'Hypothetical workflow from Drikus: seller reports 50 Angus cows and 30 calves in Ceres. Prepare a visit and gather missing details. This is sample data.', status: 'planned', facts: { Seller: 'CP van der Merwe · sample', 'Animal category': '50 cows and 30 calves · seller reported', Breed: 'Angus · unverified', Area: 'Ceres', Certificates: 'Not supplied' } },
     { ...base, id: 'sample-property', company: 'northpoint', systemId: '003', title: 'Prepare a farm listing and viewing plan', notes: 'Sample opportunity. Confirm mandate, water information, price and buyer requirements before proposing a viewing.', status: 'in_progress', checked: [0] },

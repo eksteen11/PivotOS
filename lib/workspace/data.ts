@@ -1,4 +1,3 @@
-import { createClient } from '@/lib/supabase/server'
 import { companies, getSystem, systemFitsCompany } from './catalogue'
 import type { WorkCase } from './model'
 
@@ -53,9 +52,11 @@ export function caseFromRow(row: Record<string, unknown>): WorkCase | null {
   const meta = row.meta as Record<string, unknown> | null
   const data = meta?.pivot_case as Record<string, unknown> | undefined
   if (!data) return null
+  const intake = data.intake as Record<string, unknown> | undefined
 
   const systemId = asString(data.systemId)
   const company = asString(data.company)
+  const kind = asString(data.kind || data.proposalKind || 'work')
   const system = getSystem(systemId)
   if (!system || !companies.some((c) => c.id === company)) return null
 
@@ -73,13 +74,20 @@ export function caseFromRow(row: Record<string, unknown>): WorkCase | null {
     status: statusFromRow as WorkCase['status'],
     source: asString(data.source, 'Manual capture'),
     updatedAt: asString(row.updated_at),
+    kind: ['task', 'project', 'job', 'build', 'work', 'idea', 'note', 'handoff', 'outcome'].includes(kind) ? (kind as WorkCase['kind']) : 'work',
     facts: asStringMap(data.facts),
     checked: asIndexList(data.checked),
     history: asHistory(data.history),
     lessons: asLessons(data.lessons),
+    intake: {
+      sourceCaptureId: asString(intake?.sourceCaptureId, asString(data.sourceCaptureId)),
+      proposalKind: asString(intake?.proposalKind, asString(data.proposalKind)),
+      externalBlocked: Boolean(intake?.externalBlocked ?? data.externalBlocked),
+    },
   }
 }
 export async function readWorkCases() {
+  const { createClient } = await import('@/lib/supabase/server')
   const sb = await createClient()
   const { data: { user } } = await sb.auth.getUser()
   if (!user) throw new Error('Sign in to read your work.')

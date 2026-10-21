@@ -6,4 +6,5 @@ export const hasSupabaseEnv = Boolean(supabaseUrl && supabaseAnonKey)
 
 export const openaiApiKey = process.env.OPENAI_API_KEY ?? ''
 export const openaiModel = process.env.OPENAI_MODEL ?? 'gpt-4o-mini'
+export const openaiTranscribeModel = process.env.OPENAI_TRANSCRIBE_MODEL ?? 'gpt-transcribe'
 export const hasOpenaiEnv = Boolean(openaiApiKey)
