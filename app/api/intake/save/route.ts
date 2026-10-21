@@ -4,6 +4,7 @@ import { companies, getSystem } from '@/lib/workspace/catalogue'
 import { caseFromRow } from '@/lib/workspace/data'
 import { readJsonBody } from '@/lib/http/readJson'
 import { proposalBelongsToIntake, sourceIdMatchesIntake } from '@/lib/intake/idempotency'
+import { formatSastLabel } from '@/lib/door/meetings'
 import { asSourceLabel, clampText, toSastIso, type IntakeProposal } from '@/lib/intake/shared'
 import { requireFounderSession, sameOrigin } from '@/lib/intake/server'
 import { normalizeProposal, validateSessionIds } from '@/lib/intake/validators'
@@ -14,6 +15,20 @@ function sourceField(label: string) {
 
 function toEntitySlug(company: IntakeProposal['company']) {
   return companies.find((entry) => entry.id === company)?.slug ?? ''
+}
+
+function savedMeeting(row: { id: unknown; title: unknown; due_at: unknown; meta: unknown }, company: string, fallbackTitle: string) {
+  const meta = (row.meta as Record<string, unknown> | null) ?? {}
+  const startsAt = String(row.due_at ?? '')
+  return {
+    id: String(row.id),
+    title: String(row.title ?? fallbackTitle),
+    company,
+    timeLabel: formatSastLabel(startsAt),
+    startsAt,
+    people: String(meta.people ?? ''),
+    place: String(meta.place ?? ''),
+  }
 }
 
 export async function POST(request: Request) {
@@ -130,15 +145,7 @@ export async function POST(request: Request) {
     const existing = existingRows.get(proposal.proposalId)
     if (existing) {
       if (String(existing.type ?? '') === 'meeting') {
-        const meta = (existing.meta as Record<string, unknown> | null) ?? {}
-        createdMeetings.push({
-          id: String(existing.id),
-          title: String(existing.title ?? proposal.title),
-          company: proposal.company,
-          timeLabel: String(existing.due_at ?? ''),
-          people: String(meta.people ?? ''),
-          place: String(meta.place ?? ''),
-        })
+        createdMeetings.push(savedMeeting({ id: existing.id, title: existing.title, due_at: existing.due_at, meta: existing.meta }, proposal.company, proposal.title))
       } else {
         const existingCase = caseFromRow(existing)
         if (existingCase) createdCases.push(existingCase)
@@ -183,15 +190,7 @@ export async function POST(request: Request) {
         .select('*')
         .maybeSingle()
       if (error || !data) return NextResponse.json({ error: `Could not save meeting proposal "${proposal.title}".` }, { status: 500 })
-      const meta = (data.meta as Record<string, unknown> | null) ?? {}
-      createdMeetings.push({
-        id: String(data.id),
-        title: String(data.title ?? proposal.title),
-        company: proposal.company,
-        timeLabel: String(data.due_at ?? ''),
-        people: String(meta.people ?? ''),
-        place: String(meta.place ?? ''),
-      })
+      createdMeetings.push(savedMeeting(data, proposal.company, proposal.title))
       continue
     }
 

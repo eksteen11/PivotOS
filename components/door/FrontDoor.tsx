@@ -10,10 +10,12 @@ export function FrontDoor({
   items,
   companies,
   deskHref = '/today',
+  week,
 }: {
   items: DoorMeeting[]
   companies: DoorCompanyOption[]
   deskHref?: string
+  week?: { label: string; isCurrent: boolean; previousHref: string; nextHref: string; currentHref: string }
 }) {
   const [door, setDoor] = useState<DoorCompanyId | null>(null)
   const [openId, setOpenId] = useState<string | null>(null)
@@ -69,14 +71,24 @@ export function FrontDoor({
                 New meeting
               </button>
             </div>
+            {week ? (
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
+                <Link href={week.previousHref} className="font-semibold text-[#1F8A4C]">Previous week</Link>
+                <span className="font-semibold">{week.label}</span>
+                <Link href={week.nextHref} className="font-semibold text-[#1F8A4C]">Next week</Link>
+                {week.isCurrent ? null : <Link href={week.currentHref} className="font-semibold text-[#1F8A4C]">This week</Link>}
+              </div>
+            ) : null}
             {visible.length === 0 ? (
               <p className="mt-8 max-w-xs text-[15px] leading-6 text-[#5c5c5c]">
-                {companyLabel ? `No meetings in ${companyLabel} today or this week.` : 'No meetings today or this week.'}
+                {companyLabel
+                  ? `No meetings in ${companyLabel} ${week && !week.isCurrent ? `for ${week.label}` : 'today or this week'}.`
+                  : week && !week.isCurrent ? `No meetings for ${week.label}.` : 'No meetings today or this week.'}
               </p>
             ) : (
               <div className="mt-6">
                 <MeetingGroup label="Today" items={visible.filter((item) => item.when === 'today')} openId={open?.id ?? null} onOpen={setOpenId} />
-                <MeetingGroup label="This week" items={visible.filter((item) => item.when === 'week')} openId={open?.id ?? null} onOpen={setOpenId} />
+                <MeetingGroup label={week && !week.isCurrent ? week.label : 'This week'} items={visible.filter((item) => item.when === 'week')} openId={open?.id ?? null} onOpen={setOpenId} />
               </div>
             )}
           </div>

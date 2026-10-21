@@ -24,9 +24,21 @@ export type DoorMeeting = {
   description: string
   people: string
   timeLabel: string
+  startsAt: string
   when: 'today' | 'week'
   link: string
   place: string
+}
+
+export type WeekRange = {
+  today: string
+  monday: string
+  nextMonday: string
+  previousMonday: string
+  start: string
+  end: string
+  label: string
+  isCurrent: boolean
 }
 
 const WEEKDAY: Record<string, number> = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 }
@@ -45,17 +57,77 @@ function weekdayIndex(key: string): number {
   return WEEKDAY[name] ?? 0
 }
 
-export function thisWeekRange(now = new Date()) {
-  const today = dateKey(now)
-  const monday = addDays(today, -weekdayIndex(today))
+function formatWeekLabel(monday: string) {
+  const last = addDays(monday, 6)
+  const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, day: 'numeric', month: 'short', year: 'numeric' })
+  return `${fmt.format(new Date(`${monday}T12:00:00+02:00`))} – ${fmt.format(new Date(`${last}T12:00:00+02:00`))}`
+}
+
+export function isSastDateKey(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const parsed = new Date(`${value}T12:00:00+02:00`)
+  return !Number.isNaN(parsed.getTime()) && dateKey(parsed) === value
+}
+
+export function weekRangeForDate(key: string, now = new Date()): WeekRange {
+  const monday = addDays(key, -weekdayIndex(key))
   const nextMonday = addDays(monday, 7)
+  const today = dateKey(now)
+  const currentMonday = addDays(today, -weekdayIndex(today))
   return {
     today,
     monday,
     nextMonday,
+    previousMonday: addDays(monday, -7),
     start: new Date(`${monday}T00:00:00+02:00`).toISOString(),
     end: new Date(`${nextMonday}T00:00:00+02:00`).toISOString(),
+    label: formatWeekLabel(monday),
+    isCurrent: monday === currentMonday,
   }
+}
+
+export function thisWeekRange(now = new Date()) {
+  return weekRangeForDate(dateKey(now), now)
+}
+
+export function parseWeekParam(value: unknown, now = new Date()) {
+  const raw = Array.isArray(value) ? value[0] : value
+  if (typeof raw === 'string' && isSastDateKey(raw.trim())) return weekRangeForDate(raw.trim(), now)
+  return thisWeekRange(now)
+}
+
+export function formatSastLabel(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: TZ,
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
+}
+
+export function isInWeek(value: string, range: Pick<WeekRange, 'monday' | 'nextMonday'>) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return false
+  const key = dateKey(date)
+  return key >= range.monday && key < range.nextMonday
+}
+
+export function mergeMeetingsForWeek<T extends { id: string; startsAt?: string }>(current: T[], incoming: T[], range: Pick<WeekRange, 'monday' | 'nextMonday'>) {
+  const additions = incoming.filter((meeting) => Boolean(meeting.startsAt) && isInWeek(meeting.startsAt ?? '', range))
+  const ids = new Set(additions.map((meeting) => meeting.id))
+  return [...additions, ...current.filter((meeting) => !ids.has(meeting.id))]
+}
+
+export function calendarPath(monday: string, currentMonday: string) {
+  return monday === currentMonday ? '/calendar' : `/calendar?week=${monday}`
+}
+
+export function workspaceCalendarPath(monday: string, currentMonday: string) {
+  return monday === currentMonday ? '/today?view=calendar' : `/today?view=calendar&week=${monday}`
 }
 
 export function startsAtIso(date: string, time: string): string | null {
@@ -77,16 +149,15 @@ export function doorCompanies(entities: { id: string; slug: string }[]): DoorCom
   })
 }
 
-export function toDoorMeetings(meetings: MeetingItem[], now = new Date()): DoorMeeting[] {
-  const { today, monday, nextMonday } = thisWeekRange(now)
+export function toDoorMeetings(meetings: MeetingItem[], range: WeekRange = thisWeekRange()): DoorMeeting[] {
+  const { today } = range
   const slugToDoor = new Map<string, DoorCompanyId>(DOOR_COMPANIES.map((door) => [door.entitySlug, door.id]))
 
   return meetings.flatMap((meeting) => {
-    if (!meeting.due_at) return []
+    if (!meeting.due_at || !isInWeek(meeting.due_at, range)) return []
     const starts = new Date(meeting.due_at)
     if (Number.isNaN(starts.getTime())) return []
     const key = dateKey(starts)
-    if (key < monday || key >= nextMonday) return []
     const company = slugToDoor.get(meeting.entities?.slug ?? '')
     if (!company) return []
     const description = meeting.content.trim() || meeting.title?.trim() || 'Meeting'
@@ -96,14 +167,8 @@ export function toDoorMeetings(meetings: MeetingItem[], now = new Date()): DoorM
       company,
       description,
       people: metaText(meeting.meta, 'people') || metaText(meeting.meta, 'who'),
-      timeLabel: new Intl.DateTimeFormat('en-GB', {
-        timeZone: TZ,
-        weekday: 'short',
-        day: 'numeric',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-      }).format(starts),
+      timeLabel: formatSastLabel(meeting.due_at),
+      startsAt: meeting.due_at,
       when: key === today ? 'today' as const : 'week' as const,
       link: metaText(meeting.meta, 'link'),
       place: metaText(meeting.meta, 'place') || metaText(meeting.meta, 'where'),

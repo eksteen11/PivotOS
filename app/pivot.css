@@ -31,3 +31,4 @@
 .pivot-intake-proposal-meta{display:flex;gap:8px;flex-wrap:wrap;font-size:10px;color:#667088}
 .pivot-intake-proposal-actions{display:flex;gap:12px}
 .pivot-intake-proposal-adjust{display:flex;flex-direction:column;gap:10px}
+.pivot-week-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:4px 23px 0}.pivot-week-nav a{color:#5350bf;font-size:12px;font-weight:600;text-decoration:none}.pivot-week-nav strong{font-size:13px;font-weight:600}

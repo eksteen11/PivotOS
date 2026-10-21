@@ -9,7 +9,7 @@ import { intakeSourceLabels, toSastIso, type IntakeProposal, type IntakeQuestion
 import { Dialog } from './WorkDialog'
 import { PivotIcon } from './PivotIcon'
 
-type Meeting = { id: string; title: string; company: string; timeLabel: string; people: string; place: string }
+type Meeting = { id: string; title: string; company: string; timeLabel: string; people: string; place: string; startsAt?: string }
 
 const MAX_UPLOAD_BYTES = 3 * 1024 * 1024
 const MAX_DURATION_SECONDS = 120
