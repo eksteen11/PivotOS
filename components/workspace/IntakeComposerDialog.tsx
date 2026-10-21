@@ -289,7 +289,7 @@ export function IntakeComposerDialog({
       setExpandedProposalIds([])
       setReplyDraft('')
       setAnalysisStale(false)
-      setNotice('Review proposals. Saving will record source transcript and linked work only.')
+      setNotice('Review the plan below. Nothing has started yet.')
     } catch (analysisError) {
       setError(analysisError instanceof Error ? analysisError.message : 'Analysis failed.')
     } finally {
@@ -379,7 +379,7 @@ export function IntakeComposerDialog({
         <span className="pivot-eyebrow">One conversation. A clear next step.</span>
         <h2>Tell Pivot what happened</h2>
         <p>
-          Type naturally, record voice, or upload audio. Transcript is saved with metadata. Audio files are used for transcription and are not retained by Pivot OS in this flow.
+          Type, record a voice note or upload a recording. Let’s work out what happens next.
         </p>
         <div className="pivot-form-columns">
           <button type="button" className="pivot-text-button" onClick={() => setShowMoreOptions((current) => !current)}>
@@ -419,7 +419,7 @@ export function IntakeComposerDialog({
             disabled={status !== 'idle' && status !== 'recording'}
           >
             <PivotIcon name="workforce" size={16} />
-            {status === 'recording' ? 'Recording…' : 'Record mic'}
+            {status === 'recording' ? 'Recording…' : 'Record a voice note'}
           </button>
           {status === 'recording' ? (
             <button type="button" className="pivot-button-secondary" onClick={stopRecording}>
@@ -436,9 +436,9 @@ export function IntakeComposerDialog({
                 void onUpload(file)
               }}
             />
-            Upload audio
+            Upload a recording
           </label>
-          <small>Max 3MB, max 120s, supported: mp3/mp4/mpeg/mpga/m4a/wav/webm.</small>
+          <small>Up to 2 minutes · 3MB. Your transcript is saved; the audio file isn’t retained.</small>
         </div>
         <label className="pivot-intake-main-composer">
           Tell Pivot what happened
@@ -456,7 +456,7 @@ export function IntakeComposerDialog({
         {language ? <p className="pivot-notice">Detected language: {language}</p> : null}
         <div className="pivot-intake-flow-buttons">
           <button type="button" className="pivot-button" onClick={() => void analyse()} disabled={status !== 'idle'}>
-            {status === 'analysing' ? 'Analysing…' : questions.length || proposals.length ? 'Refresh analysis' : 'Analyse intake'}
+            {status === 'analysing' ? 'Thinking it through…' : questions.length || proposals.length ? 'Update my plan' : 'Help me plan this'}
           </button>
         </div>
         {summary ? <p className="pivot-notice">{summary}</p> : null}
@@ -479,13 +479,13 @@ export function IntakeComposerDialog({
               />
             </label>
             <button type="button" className="pivot-button-secondary" onClick={() => void submitReplyRound()} disabled={!replyDraft.trim() || status !== 'idle'}>
-              Send reply and refresh proposals
+              Use this answer
             </button>
           </div>
         ) : null}
         {visibleProposals.length ? (
           <div className="pivot-intake-proposals">
-            <h3>Editable proposals</h3>
+            <h3>Here’s the plan</h3>
             {visibleProposals.map((proposal) => {
               const index = proposals.findIndex((item) => item.proposalId === proposal.proposalId)
               const expanded = expandedProposalIds.includes(proposal.proposalId)
@@ -612,10 +612,10 @@ export function IntakeComposerDialog({
               </article>
             )})}
             <p className="pivot-notice">
-              Saving creates reviewable records only. Work starts after explicit approval. External sends/app changes stay proposed and blocked until separately approved and integrated.
+              Saved work waits for your approval. Sending messages and changing linked apps need separate approval and a connected tool.
             </p>
             <button type="button" className="pivot-button" onClick={() => void save()} disabled={status !== 'idle' || busy || !visibleProposals.length || analysisStale}>
-              {status === 'saving' ? 'Saving…' : `Save ${visibleProposals.length} proposal${visibleProposals.length === 1 ? '' : 's'}`}
+              {status === 'saving' ? 'Saving…' : `Save ${visibleProposals.length} item${visibleProposals.length === 1 ? '' : 's'}`}
             </button>
           </div>
         ) : null}
