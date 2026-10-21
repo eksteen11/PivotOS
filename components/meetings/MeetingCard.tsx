@@ -1,24 +1,12 @@
-'use client'
-
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import Link from 'next/link'
 
 import { StatusBadge } from '@/components/cards/StatusBadge'
 import type { MeetingItem } from '@/lib/data/meetings'
 
 export function MeetingCard({ meeting }: { meeting: MeetingItem }) {
-  const router = useRouter()
-  const [busy, setBusy] = useState(false)
-  const prep = Array.isArray(meeting.meta?.prep) ? (meeting.meta.prep as string[]) : []
+  const prep = Array.isArray(meeting.meta?.prep) ? meeting.meta.prep.filter((item): item is string => typeof item === 'string') : []
   const transcript = typeof meeting.meta?.transcript === 'string' ? meeting.meta.transcript : null
-  const decisions = Array.isArray(meeting.meta?.decisions) ? (meeting.meta.decisions as string[]) : []
-
-  async function analyse() {
-    setBusy(true)
-    await fetch(`/api/meetings/${meeting.id}/analyse`, { method: 'POST' })
-    setBusy(false)
-    router.refresh()
-  }
+  const decisions = Array.isArray(meeting.meta?.decisions) ? meeting.meta.decisions.filter((item): item is string => typeof item === 'string') : []
 
   return (
     <article className="rounded-2xl border border-black/[0.07] bg-white/85 p-5 shadow-deck">
@@ -51,10 +39,8 @@ export function MeetingCard({ meeting }: { meeting: MeetingItem }) {
           </ul>
         </div>
       ) : null}
-      <button type="button" className="btn-primary mt-4 text-sm" disabled={busy} onClick={() => void analyse()}>
-        {busy ? 'Analysing demo…' : transcript ? 'Re-run demo analysis' : 'Run demo analysis'}
-      </button>
-      <p className="mt-2 text-[10px] leading-4 text-muted">Simulated — no provider is called and no external action is taken.</p>
+      <Link className="btn-primary mt-4 inline-flex text-sm" href={`/today/meetings/${meeting.id}`}>Open meeting</Link>
+      <p className="mt-2 text-[10px] leading-4 text-muted">Minutes are drafted from notes or the original source in the meeting workspace.</p>
     </article>
   )
 }

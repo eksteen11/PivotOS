@@ -1,5 +1,5 @@
 import { companies, systems } from '@/lib/workspace/catalogue'
-import { clampText, intakeProposalKinds, intakeSourceLabels, type IntakeProposal, type IntakeQuestion } from '@/lib/intake/shared'
+import { clampText, intakeProposalKinds, intakeSourceLabels, isUuid, type IntakeProposal, type IntakeQuestion } from '@/lib/intake/shared'
 import { normalizeProposal } from '@/lib/intake/validators'
 
 export type IntakeAnalysis = {
@@ -107,9 +107,10 @@ export function intakeAnalysisPrompt() {
   ].join('\n')
 }
 
-export function stampServerProposalId(entry: unknown) {
+export function stampServerProposalId(entry: unknown, reusedId?: string) {
   if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return entry
-  return { ...(entry as Record<string, unknown>), proposalId: crypto.randomUUID() }
+  const proposalId = reusedId && isUuid(reusedId) ? reusedId : crypto.randomUUID()
+  return { ...(entry as Record<string, unknown>), proposalId }
 }
 
 function normalizeQuestions(value: unknown) {
@@ -127,13 +128,16 @@ function normalizeQuestions(value: unknown) {
   return output
 }
 
-export function normalizeAnalysisContent(content: string): IntakeAnalysis {
+export function normalizeAnalysisContent(content: string, existingMeetingIds: string[] = []): IntakeAnalysis {
   const parsed = JSON.parse(content) as Record<string, unknown>
   if (!Array.isArray(parsed.proposals)) throw new Error('AI response is missing proposals array.')
   if (!parsed.proposals.length) throw new Error('AI returned no proposals.')
   if (parsed.proposals.length > 8) throw new Error('AI returned too many proposals.')
+  let meetingSlot = 0
   const proposals = parsed.proposals.map((entry, index) => {
-    const normalized = normalizeProposal(stampServerProposalId(entry))
+    const kind = entry && typeof entry === 'object' ? String((entry as { kind?: unknown }).kind ?? '') : ''
+    const reused = kind === 'meeting' ? existingMeetingIds[meetingSlot++] : undefined
+    const normalized = normalizeProposal(stampServerProposalId(entry, reused))
     if (!normalized) throw new Error(`AI proposal ${index + 1} failed catalogue validation.`)
     return normalized
   })

@@ -171,6 +171,7 @@ function MeetingGroup({
                   </span>
                 </span>
               </button>
+              <Link href={`/today/meetings/${item.id}`} className="mb-3 ml-4 inline-block text-sm text-[#1F8A4C]">Open meeting</Link>
             </li>
           )
         })}

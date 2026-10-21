@@ -3,7 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { readJsonBody } from '@/lib/http/readJson'
 import { companies } from '@/lib/workspace/catalogue'
 import { applyWorkAction, validateWorkInput, type WorkCase } from '@/lib/workspace/model'
+import { isUuid } from '@/lib/intake/shared'
 import { caseFromRow, validateCaseEntity } from '@/lib/workspace/data'
+import { workSummary } from '@/lib/workspace/workLink'
 
 async function founderClient() {
   const sb = await createClient()
@@ -16,6 +18,17 @@ function sameOrigin(request: Request) {
   const origin = request.headers.get('origin')
   return !origin || origin === new URL(request.url).origin
 }
+export async function GET(request: Request) {
+  const auth = await founderClient()
+  if (!auth) return NextResponse.json({ error: 'Founder sign-in required.' }, { status: 401 })
+  const id = new URL(request.url).searchParams.get('id') ?? ''
+  if (!isUuid(id)) return NextResponse.json({ error: 'Work not found.' }, { status: 404 })
+  const { data } = await auth.sb.from('items').select('*').eq('id', id).eq('user_id', auth.user.id).is('deleted_at', null).maybeSingle()
+  const item = data ? workSummary(caseFromRow(data)) : null
+  if (!item) return NextResponse.json({ error: 'Work not found.' }, { status: 404 })
+  return NextResponse.json({ item })
+}
+
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return NextResponse.json({ error: 'Request origin is not allowed.' }, { status: 403 })
   const auth = await founderClient()

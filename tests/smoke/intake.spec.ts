@@ -152,3 +152,10 @@ test('ownership/auth required for intake save', async ({ request, baseURL }) => 
   })
   expect(response.status()).toBe(401)
 })
+
+test('ownership/auth required to open a work record', async ({ request, baseURL }) => {
+  test.skip(smokeMode === 'local', 'Local mode may not run against configured Supabase auth.')
+  if (!baseURL) throw new Error('Base URL is required for smoke tests.')
+  const response = await request.get(new URL('/api/work?id=bbbbbbbb-bbbb-4ccc-8ddd-eeeeeeeeeeee', baseURL).toString())
+  expect(response.status()).toBe(401)
+})

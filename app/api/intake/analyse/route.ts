@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { openaiApiKey, openaiModel } from '@/lib/env'
 import { readJsonBody } from '@/lib/http/readJson'
 import { intakeAnalysisPrompt, intakeAnalysisResponseFormat, intakeUserPayload, normalizeAnalysisContent, type IntakeAnalysis } from '@/lib/intake/analyse'
-import { asSourceLabel, clampText } from '@/lib/intake/shared'
+import { asSourceLabel, clampText, isUuid } from '@/lib/intake/shared'
 import { requireFounderSession, sameOrigin, withTimeout } from '@/lib/intake/server'
 
 export async function POST(request: Request) {
@@ -65,7 +65,8 @@ export async function POST(request: Request) {
     }
     let result: IntakeAnalysis
     try {
-      result = normalizeAnalysisContent(content)
+      const existingMeetingIds = Array.isArray(body.existingMeetingIds) ? body.existingMeetingIds.map(String).filter(isUuid).slice(0, 8) : []
+      result = normalizeAnalysisContent(content, existingMeetingIds)
     } catch {
       return NextResponse.json({ error: 'AI analysis returned invalid structured output.' }, { status: 502 })
     }

@@ -308,19 +308,45 @@ export function IntakeComposerDialog({
           transcript,
           sourceLabel,
           clarifications: clarificationOverride ?? clarifications,
+          existingMeetingIds: proposals.filter((proposal) => proposal.kind === 'meeting').map((proposal) => proposal.proposalId),
         }),
       })
       const body = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(String(body.error ?? 'Analysis failed.'))
-      setLanguage(String(body.language ?? ''))
-      setSummary(String(body.summary ?? ''))
+      const nextLanguage = String(body.language ?? '')
+      const nextSummary = String(body.summary ?? '')
+      const nextProposals = Array.isArray(body.proposals) ? body.proposals as IntakeProposal[] : []
+      const nextClarifications = clarificationOverride ?? clarifications
+      setLanguage(nextLanguage)
+      setSummary(nextSummary)
       setQuestions(Array.isArray(body.questions) ? body.questions : [])
-      setProposals(Array.isArray(body.proposals) ? body.proposals : [])
+      setProposals(nextProposals)
       setRemovedProposalIds([])
       setExpandedProposalIds([])
       setReplyDraft('')
       setAnalysisStale(false)
-      setNotice('Review the plan below. Nothing has started yet.')
+      const meetings = nextProposals.filter((proposal) => proposal.kind === 'meeting')
+      if (meetings.length && !preview) {
+        const saved = await fetch('/api/intake/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sourceCaptureId: captureId,
+            idempotencyKey,
+            sourceLabel,
+            transcript,
+            language: nextLanguage,
+            summary: nextSummary,
+            clarifications: nextClarifications,
+            transcriptMetadata: audioMeta,
+            proposals: meetings,
+          }),
+        })
+        const savedBody = await saved.json().catch(() => ({}))
+        if (!saved.ok) throw new Error(String(savedBody.error ?? 'The meeting was not saved.'))
+        onSaved({ workCases: Array.isArray(savedBody.saved?.workCases) ? savedBody.saved.workCases : [], meetings: Array.isArray(savedBody.saved?.meetings) ? savedBody.saved.meetings : [] })
+      }
+      setNotice(meetings.length ? 'The meeting is saved. Other plans still wait for Save.' : 'Review the plan below. Nothing has started yet.')
     } catch (analysisError) {
       setError(analysisError instanceof Error ? analysisError.message : 'Analysis failed.')
     } finally {

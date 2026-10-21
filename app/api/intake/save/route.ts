@@ -8,6 +8,8 @@ import { formatSastLabel } from '@/lib/door/meetings'
 import { asSourceLabel, clampText, toSastIso, type IntakeProposal } from '@/lib/intake/shared'
 import { requireFounderSession, sameOrigin } from '@/lib/intake/server'
 import { normalizeProposal, validateSessionIds } from '@/lib/intake/validators'
+import { createMeetingCore, itemStatusForLifecycle, readMeetingCore } from '@/lib/meetings/core'
+import { mergeIntakeMeeting, saveExistingIntakeMeeting } from '@/lib/meetings/intakeMeeting'
 
 function sourceField(label: string) {
   return `manual-import:${label.toLowerCase()}`
@@ -143,20 +145,79 @@ export async function POST(request: Request) {
 
   for (const proposal of proposals) {
     const existing = existingRows.get(proposal.proposalId)
-    if (existing) {
-      if (String(existing.type ?? '') === 'meeting') {
-        createdMeetings.push(savedMeeting({ id: existing.id, title: existing.title, due_at: existing.due_at, meta: existing.meta }, proposal.company, proposal.title))
-      } else {
-        const existingCase = caseFromRow(existing)
-        if (existingCase) createdCases.push(existingCase)
+    if (existing && String(existing.type ?? '') !== 'meeting') {
+      const existingCase = caseFromRow(existing)
+      if (existingCase) createdCases.push(existingCase)
+      continue
+    }
+    if (existing && String(existing.type ?? '') === 'meeting') {
+      const existingMeta = (existing.meta as Record<string, unknown> | null) ?? {}
+      const existingDueAt = existing.due_at ? String(existing.due_at) : null
+      const current = readMeetingCore(existingMeta, existingDueAt)
+      if (!current) return NextResponse.json({ error: `Meeting "${proposal.title}" could not be updated without changing its business.` }, { status: 409 })
+      const preview = mergeIntakeMeeting({ existing: current, existingDueAt, proposal, clarifications, sourceCaptureId })
+      if (!preview.ok) return NextResponse.json({ error: preview.error }, { status: 409 })
+      let entityId = existing.entity_id ? String(existing.entity_id) : ''
+      if (preview.core.company !== current.company) {
+        entityId = entityBySlug.get(toEntitySlug(preview.core.company)) ?? ''
+        if (!entityId) return NextResponse.json({ error: `Business unavailable for proposal "${proposal.title}".` }, { status: 403 })
       }
+      let written: Record<string, unknown> | null = null
+      const saved = await saveExistingIntakeMeeting({
+        expectedUpdatedAt: String(existing.updated_at ?? ''),
+        existing: current,
+        existingDueAt,
+        proposal,
+        clarifications,
+        sourceCaptureId,
+        write: async (expectedUpdatedAt, next) => {
+          const { data, error } = await auth.sb.from('items').update({
+            entity_id: entityId,
+            status: itemStatusForLifecycle(next.core.lifecycle),
+            title: proposal.title,
+            content: proposal.notes || String(existing.content ?? ''),
+            due_at: next.dueAt,
+            meta: {
+              ...existingMeta,
+              meeting_core: next.core,
+              people: next.core.attendees,
+              place: next.core.place,
+              end_at: next.core.schedule.confirmed ? toSastIso(next.core.schedule.endAt) : existingMeta.end_at ?? null,
+              intake: {
+                ...((existingMeta.intake as Record<string, unknown> | undefined) ?? {}),
+                source_capture_id: sourceCaptureId,
+                clarifications: next.core.clarifications,
+                ai_summary: summary || (existingMeta.intake as { ai_summary?: string } | undefined)?.ai_summary,
+              },
+            },
+            updated_at: now,
+          }).eq('id', proposal.proposalId).eq('user_id', auth.user.id).eq('updated_at', expectedUpdatedAt).select('*').maybeSingle()
+          if (error || !data?.updated_at) return { ok: false }
+          written = data
+          return { ok: true, updatedAt: String(data.updated_at) }
+        },
+      })
+      if (!saved.ok) return NextResponse.json({ error: saved.error }, { status: saved.status })
+      if (!written) return NextResponse.json({ error: `Could not save meeting proposal "${proposal.title}".` }, { status: 500 })
+      createdMeetings.push(savedMeeting(written, proposal.company, proposal.title))
       continue
     }
 
     const entityId = entityBySlug.get(toEntitySlug(proposal.company))
     if (!entityId) return NextResponse.json({ error: `Business unavailable for proposal "${proposal.title}".` }, { status: 403 })
 
-    if (proposal.kind === 'meeting' && proposal.meeting.confirmedSchedule) {
+    if (proposal.kind === 'meeting') {
+      const confirmed = proposal.meeting.confirmedSchedule
+      const core = createMeetingCore({
+        company: proposal.company,
+        systemId: proposal.systemId,
+        purpose: proposal.notes || proposal.title,
+        attendees: proposal.meeting.people,
+        place: proposal.meeting.place,
+        sourceCaptureId,
+        clarifications: clarifications.map((item) => ({ field: item.field, question: '', answer: item.answer })),
+        schedule: confirmed ? { startAt: proposal.meeting.startAt, endAt: proposal.meeting.endAt, confirmed: true } : undefined,
+      })
       const { data, error } = await auth.sb
         .from('items')
         .insert({
@@ -164,15 +225,16 @@ export async function POST(request: Request) {
           user_id: auth.user.id,
           entity_id: entityId,
           type: 'meeting',
-          status: 'planned',
+          status: itemStatusForLifecycle(core.lifecycle),
           source: sourceFieldValue,
           title: proposal.title,
-          content: proposal.notes || 'Meeting proposal captured from conversational intake.',
-          due_at: toSastIso(proposal.meeting.startAt),
+          content: proposal.notes || 'Meeting captured from conversational intake.',
+          due_at: confirmed ? toSastIso(proposal.meeting.startAt) : null,
           meta: {
+            meeting_core: core,
             people: proposal.meeting.people,
             place: proposal.meeting.place,
-            end_at: toSastIso(proposal.meeting.endAt),
+            end_at: confirmed ? toSastIso(proposal.meeting.endAt) : null,
             intake: {
               source_capture_id: sourceCaptureId,
               proposal_kind: proposal.kind,
@@ -210,7 +272,7 @@ export async function POST(request: Request) {
       entityId,
       company: proposal.company,
       systemId: proposal.systemId,
-      kind: proposal.kind === 'meeting' ? 'work' : proposal.kind,
+      kind: proposal.kind,
       title: proposal.title,
       notes: `${proposal.notes}\n\nSource transcript linked (capture: ${sourceCaptureId}). Saving does not execute any external action.`,
       due: '',
