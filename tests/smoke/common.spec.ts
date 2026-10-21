@@ -30,6 +30,16 @@ test('preview sample workflow supports approval action', async ({ page }) => {
   await expect(page.locator('.pivot-status.is-in_progress')).toContainText(/in progress/i)
 })
 
+test('auth service health is operational', async ({ request, baseURL }) => {
+  test.skip(smokeMode === 'local', 'Local smoke runs without guaranteed Supabase env.')
+  if (!baseURL) throw new Error('Base URL is required for smoke tests.')
+  const response = await request.get(new URL('/api/auth/health', baseURL).toString(), { timeout: 10_000 })
+  const body = (await response.json()) as { ok?: boolean; status?: string }
+  expect(response.status()).toBe(200)
+  expect(body.ok).toBe(true)
+  expect(body.status).toBe('ok')
+})
+
 test('protected route redirects anonymous users to login', async ({ page }) => {
   test.skip(smokeMode === 'local', 'Local smoke runs without guaranteed Supabase auth wiring.')
   await page.goto('/today', { waitUntil: 'domcontentloaded' })

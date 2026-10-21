@@ -7,6 +7,17 @@ import { Suspense, useState } from 'react'
 import { AuthConnectionBanner } from '@/components/auth/AuthConnectionBanner'
 import { getSupabaseBrowser } from '@/lib/supabase/browser'
 
+const AUTH_UNREACHABLE_MESSAGE =
+  'Sign-in is temporarily unavailable. Please try again shortly.'
+
+function mapAuthErrorMessage(message: string) {
+  const lower = message.toLowerCase()
+  if (lower.includes('failed to fetch') || lower.includes('timed out') || lower.includes('network')) {
+    return AUTH_UNREACHABLE_MESSAGE
+  }
+  return message
+}
+
 function LoginForm() {
   const router = useRouter()
   const params = useSearchParams()
@@ -22,23 +33,23 @@ function LoginForm() {
     setError(null)
     const sb = getSupabaseBrowser()
     if (!sb) {
-      setError('Supabase not configured in .env.local')
+      setError(AUTH_UNREACHABLE_MESSAGE)
       setBusy(false)
       return
     }
     try {
       const result = await Promise.race([
         sb.auth.signInWithPassword({ email, password }),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Supabase timed out — project URL may be down')), 12000)),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Authentication request timed out')), 12000)),
       ])
       if (result.error) {
-        setError(result.error.message)
+        setError(mapAuthErrorMessage(result.error.message))
         return
       }
       router.push(next)
       router.refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not reach Supabase')
+      setError(err instanceof Error ? mapAuthErrorMessage(err.message) : AUTH_UNREACHABLE_MESSAGE)
     } finally {
       setBusy(false)
     }
