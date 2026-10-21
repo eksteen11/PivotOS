@@ -1,0 +1,160 @@
+name: Production Smoke
+
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      deployment_sha:
+        description: "Production deployment commit SHA"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    if: github.event_name == 'workflow_dispatch' || github.event.deployment_status.state == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CANONICAL_URL: https://pivot-os.vercel.app
+    steps:
+      - id: resolve
+        name: Resolve deployment context
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_PATH: ${{ github.event_path }}
+          REPOSITORY: ${{ github.repository }}
+          INPUT_SHA: ${{ inputs.deployment_sha }}
+        run: |
+          set -euo pipefail
+          should_run="false"
+          target_sha=""
+
+          if [[ "$EVENT_NAME" == "deployment_status" ]]; then
+            state="$(jq -r '.deployment_status.state // ""' "$EVENT_PATH")"
+            environment="$(jq -r '.deployment_status.environment // .deployment.environment // ""' "$EVENT_PATH")"
+            production_environment="$(jq -r '.deployment.production_environment // false' "$EVENT_PATH")"
+            deployment_sha="$(jq -r '.deployment.sha // ""' "$EVENT_PATH")"
+            event_repo="$(jq -r '.repository.full_name // ""' "$EVENT_PATH")"
+
+            if [[ "$event_repo" != "$REPOSITORY" ]]; then
+              echo "Event repository mismatch: $event_repo (expected $REPOSITORY)." >&2
+              exit 1
+            fi
+
+            if [[ "$state" != "success" ]]; then
+              echo "Deployment state is '$state'; skipping."
+              echo "should_run=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            if [[ "$production_environment" != "true" ]]; then
+              echo "Deployment is not marked as production (environment='$environment'). Skipping."
+              echo "should_run=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            target_sha="$deployment_sha"
+            should_run="true"
+          else
+            if [[ -z "${INPUT_SHA:-}" ]]; then
+              echo "workflow_dispatch requires deployment_sha." >&2
+              exit 1
+            fi
+            target_sha="$INPUT_SHA"
+            should_run="true"
+          fi
+
+          if [[ ! "$target_sha" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo "Invalid deployment SHA '$target_sha'." >&2
+            exit 1
+          fi
+
+          echo "should_run=$should_run" >> "$GITHUB_OUTPUT"
+          echo "target_sha=$target_sha" >> "$GITHUB_OUTPUT"
+          echo "base_url=$CANONICAL_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Skip note for non-production deployment
+        if: steps.resolve.outputs.should_run != 'true'
+        run: echo "No production smoke run required for this event."
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        if: steps.resolve.outputs.should_run == 'true'
+        with:
+          ref: ${{ steps.resolve.outputs.target_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
+        if: steps.resolve.outputs.should_run == 'true'
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Verify deployment commit is on origin/main
+        if: steps.resolve.outputs.should_run == 'true'
+        env:
+          TARGET_SHA: ${{ steps.resolve.outputs.target_sha }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor "$TARGET_SHA" origin/main; then
+            echo "Deployment SHA is not on origin/main: $TARGET_SHA" >&2
+            exit 1
+          fi
+
+      - name: Install dependencies
+        if: steps.resolve.outputs.should_run == 'true'
+        run: npm ci
+
+      - name: Install Playwright browser
+        if: steps.resolve.outputs.should_run == 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Wait for canonical release identity
+        if: steps.resolve.outputs.should_run == 'true'
+        env:
+          TARGET_SHA: ${{ steps.resolve.outputs.target_sha }}
+          BASE_URL: ${{ steps.resolve.outputs.base_url }}
+        run: |
+          set -euo pipefail
+          deadline=$((SECONDS + 600))
+          last_seen=""
+          while (( SECONDS < deadline )); do
+            payload="$(curl -fsS "$BASE_URL/api/release")" || payload=""
+            if [[ -n "$payload" ]]; then
+              live_sha="$(printf '%s' "$payload" | jq -r '.commitSha // empty')"
+              if [[ -n "$live_sha" ]]; then
+                last_seen="$live_sha"
+                if [[ "$live_sha" == "$TARGET_SHA" ]]; then
+                  echo "Release identity matched deployment SHA: $TARGET_SHA"
+                  exit 0
+                fi
+              fi
+            fi
+            sleep 5
+          done
+          echo "Timed out waiting for $BASE_URL/api/release commitSha to match deployment SHA." >&2
+          echo "Expected: $TARGET_SHA" >&2
+          echo "Last seen: ${last_seen:-<none>}" >&2
+          exit 1
+
+      - name: Run production smoke tests
+        if: steps.resolve.outputs.should_run == 'true'
+        env:
+          SMOKE_BASE_URL: ${{ steps.resolve.outputs.base_url }}
+          SMOKE_MODE: production
+        run: npm run smoke:test
+
+      - name: Upload smoke artifacts on failure
+        if: failure() && steps.resolve.outputs.should_run == 'true'
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882
+        with:
+          name: production-smoke-artifacts
+          path: |
+            playwright-report/**
+            test-results/**
+          if-no-files-found: ignore

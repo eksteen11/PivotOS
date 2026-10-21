@@ -33,6 +33,8 @@ dist-ssr
 .chunk*
 .mcp_*
 .verify-*.png
+playwright-report/
+test-results/
 scripts/.pydeps/
 supabase/migrations/_import_chunks/
 supabase/migrations/_batches/

@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "NEXT_DIST_DIR=.next-dev next dev",
-    "build": "NEXT_DIST_DIR=.next-build next build",
-    "start": "NEXT_DIST_DIR=.next-build next start",
+    "build": "next build",
+    "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "smoke:test": "playwright test",
+    "smoke:local": "SMOKE_MODE=local playwright test tests/smoke/common.spec.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
@@ -35,6 +37,7 @@
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
+    "@playwright/test": "1.51.1",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1"
