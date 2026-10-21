@@ -1,8 +1,9 @@
 import { expect, test } from '@playwright/test'
 
+import { normalizeAnalysisContent, stampServerProposalId } from '../../lib/intake/analyse'
 import { proposalBelongsToIntake, sourceIdMatchesIntake } from '../../lib/intake/idempotency'
 import { normalizeProposal, validateSessionIds } from '../../lib/intake/validators'
-import { hasValidMeetingWindow } from '../../lib/intake/shared'
+import { hasValidMeetingWindow, isUuid } from '../../lib/intake/shared'
 import { caseFromRow } from '../../lib/workspace/data'
 import { applyWorkAction } from '../../lib/workspace/model'
 
@@ -58,6 +59,55 @@ test('idempotency identifiers require UUID values', async () => {
       '9e9d9c9b-2222-4222-8222-9e9d9c9b9e9d',
     ),
   ).toBe(true)
+})
+
+test('malformed or missing model proposal ids are replaced by server uuids', () => {
+  const meeting = {
+    confirmedSchedule: false,
+    startAt: '',
+    endAt: '',
+    people: '',
+    place: '',
+  }
+  const malformed = stampServerProposalId({
+    proposalId: 'not-a-db-id',
+    kind: 'project',
+    title: 'Verkoop Angus',
+    company: 'digikraal',
+    systemId: '010',
+    notes: 'CP 50 koeie',
+    requiresExternalApproval: false,
+    uncertainties: [],
+    meeting,
+  }) as { proposalId: string }
+  const missing = stampServerProposalId({
+    kind: 'note',
+    title: 'Dragtigheidsertifikate ontbreek',
+    company: 'digikraal',
+    systemId: '005',
+    notes: 'Sertifikate ontbreek',
+    requiresExternalApproval: false,
+    uncertainties: [],
+    meeting,
+  }) as { proposalId: string }
+  expect(malformed.proposalId).not.toBe('not-a-db-id')
+  expect(isUuid(malformed.proposalId)).toBe(true)
+  expect(isUuid(missing.proposalId)).toBe(true)
+  expect(malformed.proposalId).not.toBe(missing.proposalId)
+
+  const parsed = normalizeAnalysisContent(JSON.stringify({
+    language: 'af',
+    summary: 'Verkoop, taak, nota en onbevestigde besoek.',
+    questions: [{ question: 'Wat is die presiese datum en eindtyd?', field: 'visit_window' }],
+    proposals: [
+      { proposalId: 'bad-model-id', kind: 'project', title: 'Verkoop Angus', company: 'digikraal', systemId: '010', notes: 'CP', requiresExternalApproval: false, uncertainties: [], meeting },
+      { kind: 'note', title: 'Sertifikate', company: 'digikraal', systemId: '005', notes: 'Ontbreek', requiresExternalApproval: false, uncertainties: [], meeting },
+    ],
+  }))
+  expect(parsed.proposals).toHaveLength(2)
+  expect(parsed.proposals.every((proposal) => isUuid(proposal.proposalId))).toBe(true)
+  expect(parsed.proposals[0].proposalId).not.toBe('bad-model-id')
+  expect(parsed.questions[0]?.question).toMatch(/datum/i)
 })
 
 test('proposal kind remains distinguishable in normalization', async () => {
