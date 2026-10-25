@@ -24,6 +24,7 @@ function json(status: number, body: unknown) {
 window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   if (failNetwork) throw new TypeError('network down')
   const url = String(input)
+  if (url.includes('/api/meetings/recordings')) return json(503, { error: 'Private recording storage needs setup.' })
   const body = init?.body ? JSON.parse(String(init.body)) as { updatedAt?: string; patch?: { liveNotes?: string; meetingTranscript?: string } } : {}
   calls.push({ url, updatedAt: String(body.updatedAt ?? '') })
   if (url.includes('/api/intake/source')) {

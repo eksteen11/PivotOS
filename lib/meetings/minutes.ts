@@ -1,20 +1,19 @@
 import { actionTarget, type MeetingAction, type MeetingMinutes } from '@/lib/meetings/core'
 import { companies, systems } from '@/lib/workspace/catalogue'
 
+export const MAX_MEETING_EVIDENCE = 121_000
+
 export function minutesEvidence(input: { liveNotes?: string; meetingTranscript?: string }) {
   const transcript = (input.meetingTranscript ?? '').trim()
   const notes = (input.liveNotes ?? '').trim()
-  if (transcript) return { kind: 'transcript' as const, text: transcript.slice(0, 12000) }
-  if (notes) return { kind: 'notes' as const, text: notes.slice(0, 12000) }
-  return { kind: 'none' as const, text: '' }
+  const text = [transcript && `Meeting transcript:\n${transcript}`, notes && `Typed meeting notes:\n${notes}`].filter(Boolean).join('\n\n')
+  // Never silently omit the end of a meeting or discard notes alongside audio.
+  if (text.length > MAX_MEETING_EVIDENCE) throw new Error('The meeting evidence is too long to draft safely. Split it into reviewed sections first.')
+  return { kind: transcript ? 'transcript' as const : notes ? 'notes' as const : 'none' as const, text }
 }
 
 export function evidenceText(input: { transcript?: string; notes?: string }) {
-  const transcript = (input.transcript ?? '').trim()
-  const notes = (input.notes ?? '').trim()
-  if (transcript) return { kind: 'transcript' as const, text: transcript.slice(0, 12000) }
-  if (notes) return { kind: 'notes' as const, text: notes.slice(0, 12000) }
-  return { kind: 'none' as const, text: '' }
+  return minutesEvidence({ meetingTranscript: input.transcript, liveNotes: input.notes })
 }
 
 export function emptyMinutes(): MeetingMinutes {

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { readJsonBody } from '@/lib/http/readJson'
+import { sameOrigin } from '@/lib/http/sameOrigin'
 import { companies } from '@/lib/workspace/catalogue'
 import { applyWorkAction, validateWorkInput, type WorkCase } from '@/lib/workspace/model'
 import { isUuid } from '@/lib/intake/shared'
@@ -13,10 +14,6 @@ async function founderClient() {
   if (!user) return null
   const { data: profile } = await sb.from('profiles').select('role').eq('user_id', user.id).maybeSingle()
   return profile?.role === 'founder' ? { sb, user } : null
-}
-function sameOrigin(request: Request) {
-  const origin = request.headers.get('origin')
-  return !origin || origin === new URL(request.url).origin
 }
 export async function GET(request: Request) {
   const auth = await founderClient()

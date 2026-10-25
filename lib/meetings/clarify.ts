@@ -13,7 +13,7 @@ export function clarificationResponseFormat() {
       schema: {
         type: 'object',
         additionalProperties: false,
-        required: ['company', 'systemId', 'purpose', 'desiredOutcome', 'attendees', 'place', 'link', 'startAt', 'endAt'],
+        required: ['company', 'systemId', 'purpose', 'desiredOutcome', 'attendees', 'place', 'link', 'startAt', 'endAt', 'reminderPreparationMinutes', 'reminderStartMinutes'],
         properties: {
           company: { type: 'string', enum: ['', ...companies.map((item) => item.id)] },
           systemId: { type: 'string', enum: ['', ...systems.map((item) => item.id)] },
@@ -24,6 +24,8 @@ export function clarificationResponseFormat() {
           link: { type: 'string' },
           startAt: { type: 'string' },
           endAt: { type: 'string' },
+          reminderPreparationMinutes: { type: ['integer', 'null'], minimum: 0, maximum: 10080 },
+          reminderStartMinutes: { type: ['integer', 'null'], minimum: 0, maximum: 10080 },
         },
       },
     },
@@ -40,6 +42,7 @@ export function clarificationPrompt(today: string) {
     'startAt and endAt are wall-clock times as YYYY-MM-DDTHH:mm, or empty strings. Do not convert them to UTC.',
     'Afrikaans months count: Januarie 01, Februarie 02, Maart 03, April 04, Mei 05, Junie 06, Julie 07, Augustus 08, September 09, Oktober 10, November 11, Desember 12.',
     'company and systemId stay empty unless a reply names that business or subdivision.',
+    'Reminder offsets are minutes before the meeting. Return null unless the new reply explicitly changes a reminder. One day = 1440 minutes. Never invent a new reminder timing.',
     'Repeat saved facts that still apply. Use an empty string only when that fact was never stated.',
   ].join('\n')
 }
@@ -57,6 +60,8 @@ export function clarificationUserPayload(core: MeetingCore, reply: string) {
     `Subdivision: ${core.systemId}`,
     `Start: ${core.schedule.startAt || '(empty)'}`,
     `End: ${core.schedule.endAt || '(empty)'}`,
+    `Preparation reminder: ${core.reminders.preparationMinutes} minutes before`,
+    `Start reminder: ${core.reminders.startMinutes} minutes before`,
     'Previous replies:',
     previous.join('\n') || '(none)',
     'New reply:',
@@ -67,6 +72,10 @@ export function clarificationUserPayload(core: MeetingCore, reply: string) {
 export function clarificationPatch(content: string): MeetingPatch {
   const parsed = JSON.parse(content) as Record<string, unknown>
   const patch: MeetingPatch = {}
+  for (const field of ['reminderPreparationMinutes', 'reminderStartMinutes'] as const) {
+    const value = parsed[field]
+    if (typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 10080) patch[field] = value
+  }
   const company = knownCompany(parsed.company)
   const system = getSystem(clip(parsed.systemId, 8))
   if (company) patch.company = company

@@ -64,6 +64,12 @@ export async function PATCH(request: Request) {
   const patch = rawPatch as MeetingPatch
   const applied = applyMeetingPatch(current, patch, dueAt)
   if (!applied.ok) return NextResponse.json({ error: applied.error }, { status: 400 })
+  if (applied.core.lifecycle === 'closed' && current.lifecycle !== 'closed' && current.followUpItemIds.length) {
+    const { data: tasks, error } = await auth.sb.from('items').select('id,status').eq('user_id', auth.user.id).in('id', current.followUpItemIds).is('deleted_at', null)
+    if (error || tasks?.length !== current.followUpItemIds.length || tasks.some((task) => !['done', 'cancelled'].includes(String(task.status)))) {
+      return NextResponse.json({ error: 'Finish or explicitly cancel the linked follow-up work before closing this meeting.' }, { status: 409 })
+    }
+  }
   let entityId = row.entity_id ? String(row.entity_id) : ''
   if (applied.core.company !== current.company) {
     const { data: nextEntity } = await auth.sb.from('entities').select('id').eq('user_id', auth.user.id).eq('slug', companySlug(applied.core.company)).maybeSingle()

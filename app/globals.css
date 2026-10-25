@@ -1,3 +1,7 @@
+@font-face {font-family:Manrope;font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/manrope-regular.ttf') format('truetype')}
+@font-face {font-family:Manrope;font-style:normal;font-weight:600;font-display:swap;src:url('/fonts/manrope-semibold.ttf') format('truetype')}
+@font-face {font-family:Manrope;font-style:normal;font-weight:700 800;font-display:swap;src:url('/fonts/manrope-extrabold.ttf') format('truetype')}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

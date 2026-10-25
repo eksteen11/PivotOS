@@ -9,7 +9,7 @@ test('landing renders with loaded styles', async ({ page }) => {
   await page.goto('/', { waitUntil: 'networkidle' })
   await cssResponsePromise
 
-  const heroStyles = await page.locator('.pivot-hero h1').evaluate((el) => {
+  const heroStyles = await page.getByRole('heading', { level: 1 }).evaluate((el) => {
     const style = window.getComputedStyle(el)
     return {
       fontFamily: style.fontFamily,
@@ -19,8 +19,10 @@ test('landing renders with loaded styles', async ({ page }) => {
   expect(heroStyles.fontFamily.toLowerCase()).not.toContain('times')
   expect(parseFloat(heroStyles.fontSize)).toBeGreaterThan(32)
 
-  await expect(page.locator('.pivot-landing-header')).toHaveCSS('display', 'flex')
-  await expect(page.getByRole('link', { name: /sign in/i })).toBeVisible()
+  await expect(page.locator('.pivot-landing-header-inner')).toHaveCSS('display', 'flex')
+  const signIn = page.getByRole('banner').getByRole('link', { name: 'Sign in', exact: true })
+  if (!(await signIn.isVisible())) await page.getByRole('button', { name: 'Open navigation', exact: true }).click()
+  await expect(signIn).toBeVisible()
 })
 
 test('preview sample workflow supports approval action', async ({ page }) => {

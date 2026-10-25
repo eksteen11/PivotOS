@@ -11,7 +11,7 @@ export const siteMetadata: Metadata = {
     title: 'Pivot OS',
   },
   icons: {
-    icon: '/pwa-192x192.svg',
-    apple: '/apple-touch-icon.svg',
+    icon: '/pwa-192x192.png',
+    apple: '/apple-touch-icon.png',
   },
 }

@@ -6,6 +6,8 @@ export async function middleware(request: import('next/server').NextRequest) {
 export const config = {
   matcher: [
     '/today/:path*',
+    '/account/:path*',
+    '/reset-password',
     '/inbox/:path*',
     '/processes/:path*',
     '/agents/:path*',

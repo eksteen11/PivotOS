@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 
+export { sameOrigin } from '@/lib/http/sameOrigin'
+
 export async function requireFounderSession() {
   const sb = await createClient()
   const {
@@ -9,11 +11,6 @@ export async function requireFounderSession() {
   const { data: profile } = await sb.from('profiles').select('role').eq('user_id', user.id).maybeSingle()
   if (profile?.role !== 'founder') return null
   return { sb, user }
-}
-
-export function sameOrigin(request: Request) {
-  const origin = request.headers.get('origin')
-  return !origin || origin === new URL(request.url).origin
 }
 
 export function withTimeout(ms: number) {

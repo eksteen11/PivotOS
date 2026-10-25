@@ -1,3 +1,4 @@
+import { accountName } from '@/lib/auth/navigation'
 import { PivotWorkspace } from '@/components/workspace/PivotWorkspace'
 import { getArrangeMeetings, getMeetings } from '@/lib/data/meetings'
 import { parseWeekParam, thisWeekRange, toDoorMeetings, type WeekRange } from '@/lib/door/meetings'
@@ -44,11 +45,13 @@ export default async function TodayPage({
   let arrangeMeetings: { id: string; title: string; company: string; timeLabel: string; people: string; place: string }[] = []
   let loadError = ''
   let founderUserId = ''
+  let account = { name: 'Your account', email: '' }
 
   try {
     const sb = await createClient()
     const { data: { user } } = await sb.auth.getUser()
     founderUserId = user?.id ?? ''
+    if (user) account = { name: accountName(user), email: user.email ?? '' }
   } catch {
     founderUserId = ''
   }
@@ -79,5 +82,5 @@ export default async function TodayPage({
     loadError = loadError ? `${loadError} ${meetingError}` : meetingError
   }
 
-  return <PivotWorkspace key={`${selectedWeek.monday}:${requestedWork}`} initialCases={items} meetings={meetings} deskMeetings={deskMeetings} arrangeMeetings={arrangeMeetings} week={{ label: selectedWeek.label, monday: selectedWeek.monday, previousMonday: selectedWeek.previousMonday, nextMonday: selectedWeek.nextMonday, isCurrent: selectedWeek.isCurrent, currentMonday: currentWeek.monday }} loadError={loadError} initialView={initialView} initialWorkId={requestedWork} founderUserId={founderUserId} />
+  return <PivotWorkspace account={account} key={`${selectedWeek.monday}:${requestedWork}`} initialCases={items} meetings={meetings} deskMeetings={deskMeetings} arrangeMeetings={arrangeMeetings} week={{ label: selectedWeek.label, monday: selectedWeek.monday, previousMonday: selectedWeek.previousMonday, nextMonday: selectedWeek.nextMonday, isCurrent: selectedWeek.isCurrent, currentMonday: currentWeek.monday }} loadError={loadError} initialView={initialView} initialWorkId={requestedWork} founderUserId={founderUserId} />
 }

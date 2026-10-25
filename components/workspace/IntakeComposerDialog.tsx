@@ -504,6 +504,7 @@ export function IntakeComposerDialog({
           <textarea
             rows={6}
             value={transcript}
+            aria-describedby={error ? 'intake-error' : undefined}
             onChange={(e) => {
               setTranscript(e.target.value)
               setAnalysisStale(true)
@@ -514,13 +515,15 @@ export function IntakeComposerDialog({
         </label>
         {language ? <p className="pivot-notice">Detected language: {language}</p> : null}
         <div className="pivot-intake-flow-buttons">
-          <button type="button" className="pivot-button" onClick={() => void analyse()} disabled={status !== 'idle'}>
+          <button type="button" className="pivot-button" onClick={() => void analyse()} disabled={status !== 'idle' || !transcript.trim()}>
             {status === 'analysing' ? 'Thinking it through…' : questions.length || proposals.length ? 'Update my plan' : 'Help me plan this'}
           </button>
         </div>
         {summary ? <p className="pivot-notice">{summary}</p> : null}
         {analysisStale && proposals.length ? <p className="pivot-notice">Transcript or clarification changed. Re-analyse before saving.</p> : null}
-        {error ? <p className="pivot-error">{error}</p> : null}
+        {error ? <p id="intake-error" className="pivot-error" role="alert">{error === 'Request origin is not allowed.'
+          ? 'Pivot couldn’t verify this page’s address. Your text is still here. Reopen Pivot using its usual address, then try again.'
+          : error}</p> : null}
         {notice ? <p className="pivot-notice">{notice}</p> : null}
         {nextQuestion ? (
           <div className="pivot-intake-chat-round">

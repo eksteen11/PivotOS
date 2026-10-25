@@ -4,6 +4,8 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'Pivot OS',
     short_name: 'Pivot',
+    id: '/',
+    scope: '/',
     description: "DJ Eksteen's mobile-first Founder Operating System",
     start_url: '/today',
     display: 'standalone',
@@ -12,15 +14,21 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: 'any',
     icons: [
       {
-        src: '/pwa-192x192.svg',
+        src: '/pwa-192x192.png',
         sizes: '192x192',
-        type: 'image/svg+xml',
+        type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/pwa-512x512.svg',
+        src: '/pwa-512x512.png',
         sizes: '512x512',
-        type: 'image/svg+xml',
+        type: 'image/png',
+        purpose: 'any',
+      },
+      {
+        src: '/pwa-maskable-512x512.png',
+        sizes: '512x512',
+        type: 'image/png',
         purpose: 'maskable',
       },
     ],

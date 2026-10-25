@@ -1,118 +1,63 @@
 'use client'
-
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-
+import { AuthShell } from '@/components/auth/AuthShell'
 import { AuthConnectionBanner } from '@/components/auth/AuthConnectionBanner'
+import { PasswordField } from '@/components/auth/PasswordField'
 import { getSupabaseBrowser } from '@/lib/supabase/browser'
 
 export default function RegisterPage() {
   const router = useRouter()
-  const [seatOpen, setSeatOpen] = useState<boolean | null>(null)
+  const [available, setAvailable] = useState<boolean | null>(null)
+  const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [notice, setNotice] = useState<string | null>(null)
+  const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
-
   useEffect(() => {
     let cancelled = false
-    async function load() {
-      const sb = getSupabaseBrowser()
-      if (!sb) {
-        if (!cancelled) setSeatOpen(false)
-        return
-      }
-      const { data, error: rpcError } = await sb.rpc('founder_seat_open')
-      if (!cancelled) setSeatOpen(!rpcError && data === true)
+    async function check() {
+      try {
+        const sb = getSupabaseBrowser()
+        if (!sb) throw new Error('Account creation is temporarily unavailable.')
+        const { data, error } = await sb.rpc('account_registration_open')
+        if (!cancelled) { setAvailable(!error && data === true); if (error) setError('Account registration is being set up. Please try again later.') }
+      } catch { if (!cancelled) { setAvailable(false); setError('Could not check account registration. Please try again later.') } }
     }
-    void load()
-    return () => {
-      cancelled = true
-    }
+    void check()
+    return () => { cancelled = true }
   }, [])
-
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setNotice(null)
-    if (password.length < 8) {
-      setError('Use at least 8 characters.')
-      return
-    }
-    if (password !== confirm) {
-      setError('The two passwords do not match.')
-      return
-    }
-    const sb = getSupabaseBrowser()
-    if (!sb) {
-      setError('Supabase not configured in .env.local')
-      return
-    }
+  async function submit(e: React.FormEvent) {
+    e.preventDefault(); setError(''); setNotice('')
+    if (!available) return
+    if (password !== confirm) { setError('The two passwords do not match.'); return }
     setBusy(true)
     try {
-      const { data, error: signError } = await sb.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: `${window.location.origin}/login` },
-      })
-      if (signError) {
-        setError(signError.message.includes('not open')
-          ? 'A founder already holds Pivot OS. Co-worker invitations are not open.'
-          : signError.message)
-        return
-      }
-      if (data.session) {
-        router.push('/today')
-        router.refresh()
-        return
-      }
-      setNotice('Account created. Confirm the email if Supabase asks, then sign in.')
-    } finally {
-      setBusy(false)
-    }
+      const sb = getSupabaseBrowser()
+      if (!sb) throw new Error('Account creation is temporarily unavailable.')
+      const { data, error } = await sb.auth.signUp({ email: email.trim(), password, options: { data: { display_name: displayName.trim() }, emailRedirectTo: `${window.location.origin}/auth/callback?next=/today` } })
+      if (error) throw error
+      if (data.session) { router.replace('/today'); router.refresh(); return }
+      setNotice('Check your email for a confirmation link. If you already have an account, sign in or reset your password.')
+    } catch (error) { setError(error instanceof Error ? error.message : 'Could not create your account. Please try again.') }
+    finally { setBusy(false) }
   }
-
-  return (
-    <main className="relative flex min-h-screen justify-center overflow-hidden bg-[#fbfaf5] px-5 py-12 sm:items-center">
-      <section className="relative z-10 flex w-full max-w-sm flex-col gap-10">
-        <Link href="/" className="text-center text-5xl font-extrabold tracking-[-0.06em] text-ink">Pivot OS</Link>
-        <div className="w-full space-y-4 rounded-2xl border border-white/70 bg-white/55 p-5 shadow-deck backdrop-blur-xl sm:p-6">
-          <div>
-            <h1 className="text-lg font-semibold">Create the founder account</h1>
-            <p className="mt-1 text-sm text-muted">This door is yours. Co-workers stay out until you invite them later.</p>
-          </div>
-          <AuthConnectionBanner />
-          {seatOpen === null ? <p className="text-sm text-muted">Checking the founder seat…</p> : null}
-          {seatOpen === false ? (
-            <p className="text-sm leading-6 text-ink">A founder already holds this system. Co-worker access is not open yet.</p>
-          ) : null}
-          {seatOpen === true ? (
-            <form onSubmit={onSubmit} className="space-y-4">
-              <label className="block space-y-1.5">
-                <span className="text-sm font-semibold">Email</span>
-                <input className="field-input" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-              </label>
-              <label className="block space-y-1.5">
-                <span className="text-sm font-semibold">Password</span>
-                <input className="field-input" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-              </label>
-              <label className="block space-y-1.5">
-                <span className="text-sm font-semibold">Confirm password</span>
-                <input className="field-input" type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
-              </label>
-              {error ? <p className="text-sm text-danger">{error}</p> : null}
-              {notice ? <p className="text-sm leading-6 text-ink">{notice}</p> : null}
-              <button type="submit" className="btn-primary w-full" disabled={busy}>
-                {busy ? 'Creating…' : 'Create founder account'}
-              </button>
-            </form>
-          ) : null}
-          <Link href="/login" className="block text-center text-sm font-semibold text-accent">Back to sign in</Link>
-        </div>
-      </section>
-    </main>
-  )
+  return <AuthShell title={available === false ? "By invitation. By design." : "Make room for momentum."} description={available === false ? "Your work belongs in a private workspace." : "Create your account and a private place for your work."}>
+    <AuthConnectionBanner />
+    {available === null ? <p role="status">Checking account availability…</p> : null}
+    {available === false ? <p className="account-notice">Pivot is private. Sign in with your existing account. Teammates will join through invitations when team sharing opens.</p> : null}
+    {notice ? <div className="account-success" role="status">{notice}<button type="button" className="account-text-link" disabled={busy} onClick={async () => { setBusy(true); setError(''); try { const sb = getSupabaseBrowser(); if (!sb) throw new Error('Email is unavailable. Please try again.'); const { error } = await sb.auth.resend({ type: 'signup', email: email.trim(), options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=/today` } }); if (error) throw error; setNotice('Confirmation email requested. Check your inbox and spam folder.') } catch (error) { setError(error instanceof Error ? error.message : 'Could not resend. Please try again.') } finally { setBusy(false) } }}>Resend confirmation email</button></div> : available === true ? <form onSubmit={submit} className="account-form">
+      <label className="account-field"><span>Your name</span><input autoComplete="name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} minLength={2} maxLength={80} required /></label>
+      <label className="account-field"><span>Email address</span><input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={254} required /></label>
+      <PasswordField value={password} onChange={setPassword} autoComplete="new-password" minLength={12} />
+      <p className="account-hint">Use at least 12 characters. A unique passphrase works well.</p>
+      <PasswordField label="Confirm password" value={confirm} onChange={setConfirm} autoComplete="new-password" minLength={12} />
+      <button className="pivot-button account-submit" disabled={busy || !available}>{busy ? 'Creating your account…' : 'Create account →'}</button>
+    </form> : null}
+    {error ? <p role="alert" className="account-error">{error}</p> : null}
+    <p className="account-form-foot">Already have an account? <Link href="/login">Sign in</Link></p>
+  </AuthShell>
 }

@@ -5,6 +5,7 @@ import { ServiceWorkerRegistration } from '@/components/providers/ServiceWorkerR
 import { siteMetadata } from './site-metadata'
 import './globals.css'
 import './pivot.css'
+import './account.css'
 
 export const metadata = siteMetadata
 export const viewport: Viewport = {

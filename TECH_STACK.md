@@ -2,6 +2,8 @@
 
 **Authority:** Follows `CONSTITUTION.md` + `MAMMOTH_PLAN.md` (approved 2026-08-14).
 
+**Current founder amendments (2026-10-20):** `plan/interviews/SHARED.md` confirms that Pivot plus linked apps replace Google Sheets, Kraaldesk eventually owns agency operational records, and continuous learning starts with the first useful workflow. The navigation below predates the current layout exploration. See `plan/MONDAY_RESEARCH_AND_PRODUCT_DIRECTION.md` for the proposed Desk/Inboxes/Work/Calendar/Workforce structure and shared record/view patterns; that proposal is not yet a final navigation lock. Existing stack choices remain in place.
+
 ## Architecture Decision
 Brownfield infrastructure, greenfield product experience.
 

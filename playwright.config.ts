@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
+// Playwright 1.51 requires this flag to apply offline emulation to service workers.
+process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = '1'
+
 const baseURL = process.env.SMOKE_BASE_URL || 'http://127.0.0.1:3000'
 
 export default defineConfig({

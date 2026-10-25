@@ -1,110 +1,43 @@
 'use client'
-
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useState } from 'react'
-
 import { AuthConnectionBanner } from '@/components/auth/AuthConnectionBanner'
+import { AuthShell } from '@/components/auth/AuthShell'
+import { PasswordField } from '@/components/auth/PasswordField'
+import { safeNextPath } from '@/lib/auth/navigation'
 import { getSupabaseBrowser } from '@/lib/supabase/browser'
-
-const AUTH_UNREACHABLE_MESSAGE =
-  'Sign-in is temporarily unavailable. Please try again shortly.'
-
-function mapAuthErrorMessage(message: string) {
-  const lower = message.toLowerCase()
-  if (lower.includes('failed to fetch') || lower.includes('timed out') || lower.includes('network')) {
-    return AUTH_UNREACHABLE_MESSAGE
-  }
-  return message
-}
 
 function LoginForm() {
   const router = useRouter()
   const params = useSearchParams()
-  const next = params.get('next') ?? '/today'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
-
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setBusy(true)
-    setError(null)
-    const sb = getSupabaseBrowser()
-    if (!sb) {
-      setError(AUTH_UNREACHABLE_MESSAGE)
-      setBusy(false)
-      return
-    }
+  async function submit(e: React.FormEvent) {
+    e.preventDefault(); setBusy(true); setError('')
     try {
-      const result = await Promise.race([
-        sb.auth.signInWithPassword({ email, password }),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Authentication request timed out')), 12000)),
-      ])
-      if (result.error) {
-        setError(mapAuthErrorMessage(result.error.message))
-        return
-      }
-      router.push(next)
-      router.refresh()
-    } catch (err) {
-      setError(err instanceof Error ? mapAuthErrorMessage(err.message) : AUTH_UNREACHABLE_MESSAGE)
-    } finally {
-      setBusy(false)
-    }
+      const sb = getSupabaseBrowser()
+      if (!sb) throw new Error('Sign-in is temporarily unavailable. Please try again shortly.')
+      const { error } = await sb.auth.signInWithPassword({ email: email.trim(), password })
+      if (error) throw error
+      router.replace(safeNextPath(params.get('next'))); router.refresh()
+    } catch (error) { setError(error instanceof Error ? error.message : 'Could not sign in. Please try again.') }
+    finally { setBusy(false) }
   }
-
-  return (
-    <form onSubmit={onSubmit} className="w-full space-y-4 rounded-2xl border border-white/70 bg-white/55 p-5 shadow-deck backdrop-blur-xl sm:p-6">
-      <div>
-        <h1 className="text-lg font-semibold">Enter your system</h1>
-        <p className="mt-1 text-sm text-muted">Private, secure access to Pivot OS.</p>
-      </div>
-      <AuthConnectionBanner />
-      <label className="block space-y-1.5">
-        <span className="text-sm font-semibold">Email</span>
-        <input
-          className="field-input"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-      </label>
-      <label className="block space-y-1.5">
-        <span className="text-sm font-semibold">Password</span>
-        <input
-          className="field-input"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </label>
-      {error ? <p className="text-sm text-danger">{error}</p> : null}
-      <button type="submit" className="btn-primary w-full" disabled={busy}>
-        {busy ? 'Entering…' : 'Enter system →'}
-      </button>
-      <Link href="/register" className="block text-center text-sm font-semibold text-accent">Create the founder account</Link>
-    </form>
-  )
+  return <form onSubmit={submit} className="account-form">
+    <AuthConnectionBanner />
+    {params.get('error') ? <p className="account-error" role="alert">That email link is invalid or has expired. Request a new link below.</p> : null}
+    {params.get('confirmed') ? <p className="account-success" role="status">Email confirmed. You can sign in now.</p> : null}
+    <label className="account-field"><span>Email address</span><input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required maxLength={254} /></label>
+    <PasswordField value={password} onChange={setPassword} />
+    <Link href="/forgot-password" className="account-text-link account-forgot">Forgot password?</Link>
+    {error ? <p className="account-error" role="alert">{error}</p> : null}
+    <button className="pivot-button account-submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in →'}</button>
+    <p className="account-form-foot">Joining Pivot? <Link href="/register">Account access</Link></p>
+  </form>
 }
-
 export default function LoginPage() {
-  return (
-    <main className="relative flex min-h-screen justify-center overflow-hidden bg-[#fbfaf5] px-5 py-12 sm:items-center">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_25%,rgba(23,114,75,0.10),transparent_28rem),radial-gradient(circle_at_20%_75%,rgba(214,205,184,0.36),transparent_24rem)]" />
-      <section className="relative z-10 flex w-full max-w-sm flex-col justify-between gap-16 sm:justify-center">
-        <div className="pt-8 text-center sm:pt-0">
-          <Link href="/" className="text-5xl font-extrabold tracking-[-0.06em] text-ink">Pivot OS</Link>
-        </div>
-        <Suspense>
-          <LoginForm />
-        </Suspense>
-      </section>
-    </main>
-  )
+  return <AuthShell title="Welcome back." description="A little clarity starts here. Sign in to your workspace."><Suspense fallback={<p>Loading sign-in…</p>}><LoginForm /></Suspense></AuthShell>
 }

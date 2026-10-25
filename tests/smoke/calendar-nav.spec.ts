@@ -82,6 +82,31 @@ test('week navigation and reload show the same meetings without clearing the dra
     await expect(page.getByLabel('Tell Pivot what happened')).toHaveValue('Hou hierdie konsep')
     const afterOpen = await page.evaluate((key) => localStorage.getItem(key), draftKey)
     expect(afterOpen).toContain('Hou hierdie konsep')
+
+    // A rejected request keeps the draft and allows a successful retry.
+    let attempts = 0
+    await page.route('**/api/intake/analyse', (route) => {
+      attempts += 1
+      return route.fulfill({
+        status: attempts === 1 ? 403 : 200,
+        contentType: 'application/json',
+        body: JSON.stringify(attempts === 1
+          ? { error: 'Request origin is not allowed.' }
+          : { language: 'af', summary: 'Plan ready after retry', questions: [], proposals: [] }),
+      })
+    })
+    const planButton = page.getByRole('button', { name: 'Help me plan this' })
+    await page.getByLabel('Tell Pivot what happened').fill('   ')
+    await expect(planButton).toBeDisabled()
+    await page.getByLabel('Tell Pivot what happened').fill('Hou hierdie konsep')
+    await planButton.click()
+    await expect(page.getByRole('alert')).toContainText('Your text is still here')
+    await expect(page.getByRole('alert')).not.toContainText('Request origin')
+    await expect(page.getByLabel('Tell Pivot what happened')).toHaveValue('Hou hierdie konsep')
+    await planButton.click()
+    await expect(page.getByText('Plan ready after retry')).toBeVisible()
+    await expect(page.getByRole('alert')).toHaveCount(0)
+    expect(attempts).toBe(2)
   } finally {
     await new Promise<void>((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())))
   }

@@ -18,6 +18,7 @@ export type MeetingMinutes = {
 export type MeetingClarification = { field: string; question: string; answer: string }
 export type MeetingCore = {
   version: 1
+  reminders: { preparationMinutes: number; startMinutes: number }
   lifecycle: MeetingLifecycle
   company: Company
   systemId: string
@@ -70,6 +71,16 @@ export function entitySlugFrom(value: unknown) {
   return null
 }
 
+function reminderMinutes(value: unknown, fallback: number) {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 10080 ? value : fallback
+}
+
+export function validMeetingActionDate(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || value.startsWith('0000-')) return false
+  const date = new Date(`${value}T00:00:00Z`)
+  return Number.isFinite(date.valueOf()) && date.toISOString().slice(0, 10) === value
+}
+
 function clip(value: unknown, max: number) {
   return String(value ?? '').trim().slice(0, max)
 }
@@ -98,6 +109,7 @@ export function createMeetingCore(input: {
   }
   const core: MeetingCore = {
     version: 1,
+    reminders: { preparationMinutes: 1440, startMinutes: 30 },
     lifecycle: schedule.confirmed ? 'scheduled' : 'to_arrange',
     company: input.company,
     systemId: systemFor(input.company, input.systemId),
@@ -184,9 +196,11 @@ function readStored(row: Record<string, unknown>, dueAt: string | null, entitySl
   const endAt = clip(schedule.endAt, 16)
   const confirmed = Boolean(schedule.confirmed) && hasValidMeetingWindow(startAt, endAt)
   const legacySchedule = Boolean(row.legacySchedule)
+  const reminders = row.reminders && typeof row.reminders === 'object' ? row.reminders as Record<string, unknown> : {}
   const minutes = row.minutes && typeof row.minutes === 'object' ? row.minutes as Record<string, unknown> : null
   return {
     version: 1,
+    reminders: { preparationMinutes: reminderMinutes(reminders.preparationMinutes, 1440), startMinutes: reminderMinutes(reminders.startMinutes, 30) },
     lifecycle: meetingLifecycles.includes(row.lifecycle as MeetingLifecycle) ? row.lifecycle as MeetingLifecycle : 'to_arrange',
     company,
     systemId: systemFor(company, row.systemId),
@@ -202,7 +216,7 @@ function readStored(row: Record<string, unknown>, dueAt: string | null, entitySl
     place: clip(row.place, 500),
     link: clip(row.link, 500),
     liveNotes: clip(row.liveNotes, 20000),
-    meetingTranscript: clip(row.meetingTranscript, 20000),
+    meetingTranscript: clip(row.meetingTranscript, 100000),
     minutes: minutes ? {
       revision: Number(minutes.revision) || 0,
       discussion: clip(minutes.discussion, 4000),
@@ -234,6 +248,7 @@ export function readMeetingCore(meta: Record<string, unknown> | null, dueAt: str
   const legacyDueAt = dueAt || null
   return {
     version: 1,
+    reminders: { preparationMinutes: 1440, startMinutes: 30 },
     lifecycle: legacyDueAt ? 'scheduled' : 'to_arrange',
     company,
     systemId: '001',
@@ -290,6 +305,8 @@ export type MeetingPatch = Partial<Pick<MeetingCore, 'lifecycle' | 'company' | '
   endAt?: string
   clearSchedule?: boolean
   minutesActions?: MeetingAction[]
+  reminderPreparationMinutes?: number
+  reminderStartMinutes?: number
 }
 
 export function itemStatusForLifecycle(lifecycle: MeetingLifecycle) {
@@ -318,19 +335,29 @@ export function canTransition(from: MeetingLifecycle, to: MeetingLifecycle, core
 export function actionTarget(action: MeetingAction) {
   const company = knownCompany(action.company)
   const system = company ? getSystem(action.systemId) : undefined
-  if (!company || !system || !systemFitsCompany(system, company)) return null
+  if (!company || !system || !systemFitsCompany(system, company) || (action.due && !validMeetingActionDate(action.due))) return null
   return { company, systemId: system.id, owner: action.owner.trim().slice(0, 120), due: /^\d{4}-\d{2}-\d{2}$/.test(action.due) ? action.due : '' }
 }
 
 export function applyMeetingPatch(current: MeetingCore, patch: MeetingPatch, existingDueAt: string | null = current.legacyDueAt): { ok: true; core: MeetingCore; dueAt: string | null } | { ok: false; error: string } {
   if (current.reviewClaim?.phase === 'pending') return { ok: false, error: 'A review is being saved. Retry it before editing.' }
+  if (typeof patch.liveNotes === 'string' && patch.liveNotes.trim().length > 20_000) return { ok: false, error: 'These notes are too long for one meeting. Your device copy is kept; review them in sections.' }
+  if (typeof patch.meetingTranscript === 'string' && patch.meetingTranscript.trim().length > 100_000) return { ok: false, error: 'This transcript is too long for one meeting. Your device copy is kept; review it in sections.' }
   const next: MeetingCore = {
     ...current,
     schedule: { ...current.schedule },
+    reminders: { ...current.reminders },
     prep: current.prep.map((item) => ({ ...item })),
     clarifications: current.clarifications.map((item) => ({ ...item })),
     minutes: current.minutes ? { ...current.minutes, decisions: [...current.minutes.decisions], actions: current.minutes.actions.map((item) => ({ ...item })), questions: [...current.minutes.questions] } : null,
     followUpItemIds: [...current.followUpItemIds],
+  }
+  for (const [field, key] of [['reminderPreparationMinutes', 'preparationMinutes'], ['reminderStartMinutes', 'startMinutes']] as const) {
+    if (field in patch) {
+      const value = patch[field]
+      if (reminderMinutes(value, -1) === -1) return { ok: false, error: 'Reminder timing must be between 0 and 10080 minutes before the meeting.' }
+      next.reminders[key] = value!
+    }
   }
   if ('company' in patch) {
     const company = knownCompany(patch.company)
@@ -349,7 +376,7 @@ export function applyMeetingPatch(current: MeetingCore, patch: MeetingPatch, exi
     next.agendaSource = 'manual'
   }
   if ('liveNotes' in patch) next.liveNotes = clip(patch.liveNotes, 20000)
-  if ('meetingTranscript' in patch) next.meetingTranscript = clip(patch.meetingTranscript, 20000)
+  if ('meetingTranscript' in patch) next.meetingTranscript = clip(patch.meetingTranscript, 100000)
   if (current.minutes && current.minutes.revision > 0 && (next.liveNotes !== current.liveNotes || next.meetingTranscript !== current.meetingTranscript)) {
     next.minutesStale = true
     next.approvedRevision = null
@@ -412,6 +439,8 @@ export function reviewFollowUp(core: MeetingCore, revision: number) {
   }
   if (core.approvedRevision === revision) return { ok: true as const, alreadyApproved: true, actions: [] as MeetingAction[], existingIds: core.followUpItemIds }
   const actions = core.minutes.actions.filter((action) => action.include)
+  if (new Set(actions.map((action) => action.id)).size !== actions.length) return { ok: false as const, error: 'Each reviewed action needs a unique identity. Draft these minutes again.' }
+  if (actions.some((action) => action.due && !validMeetingActionDate(action.due))) return { ok: false as const, error: 'Choose a real calendar date for each action deadline.' }
   const invalid = actions.find((action) => !actionTarget(action))
   if (invalid) return { ok: false as const, error: `Choose a valid business and subdivision for “${invalid.title}”.` }
   return { ok: true as const, alreadyApproved: false, actions, existingIds: [] as string[] }

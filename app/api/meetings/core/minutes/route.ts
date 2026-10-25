@@ -22,7 +22,12 @@ export async function POST(request: Request) {
   const current = readMeetingCore((row.meta as Record<string, unknown> | null) ?? {}, row.due_at ? String(row.due_at) : null, entitySlugFrom(row.entities))
   if (!current) return NextResponse.json({ error: 'This meeting’s business could not be read, so nothing was changed.' }, { status: 409 })
   if (current.reviewClaim?.phase === 'pending') return NextResponse.json({ error: 'A review is being saved. Retry it before editing.' }, { status: 409 })
-  const evidence = minutesEvidence({ liveNotes: current.liveNotes, meetingTranscript: current.meetingTranscript })
+  let evidence: ReturnType<typeof minutesEvidence>
+  try {
+    evidence = minutesEvidence({ liveNotes: current.liveNotes, meetingTranscript: current.meetingTranscript })
+  } catch {
+    return NextResponse.json({ error: 'The meeting evidence is too long. Split it into reviewed sections before drafting minutes.' }, { status: 400 })
+  }
   if (evidence.kind === 'none') {
     return NextResponse.json({ minutes: emptyMinutes(), calledModel: false, error: 'No transcript or notes were available, so no minutes were drafted.' }, { status: 400 })
   }

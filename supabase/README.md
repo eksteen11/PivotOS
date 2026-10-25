@@ -6,6 +6,10 @@ Primary app: **Next.js** (`npm run dev` → http://localhost:3000)
 
 The Vite prototype under `src/` is archive only and is not part of the production build.
 
+### Current accounts and access
+
+Confirmed project: `xikwbkcdbfscnijlfwjw` (owner-confirmed 2026-10-25). Pivot remains private, with team invitations deferred. Migration `0018_accounts_and_business_roles.sql` and the matching isolation checks are applied and verified. See [Accounts and access](../plan/auth/ACCOUNTS_AND_ACCESS.md) for live configuration, release status and remaining email-delivery setup. The historical migration walkthrough below predates the active front-door schema; do not replay prototype seed migrations into production.
+
 `0011_seed_pivot_os_demo.sql` is a development seed. It must not be treated as production data.
 
 ### Env

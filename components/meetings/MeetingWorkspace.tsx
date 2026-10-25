@@ -1,6 +1,8 @@
 'use client'
 
 import Link from 'next/link'
+import { MeetingConnections } from '@/components/meetings/MeetingConnections'
+import { MeetingRecording } from '@/components/meetings/MeetingRecording'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 
 import { companies, getCompany, getSystem, systemFitsCompany, systems, type Company } from '@/lib/workspace/catalogue'
@@ -301,6 +303,8 @@ export function MeetingWorkspace({ meetingId, founderId, title, updatedAt: initi
             <label>Title<input value={name} onChange={(event) => setName(event.target.value)} onBlur={() => void save({ title: name })} /></label>
             <label>Business<select value={core.company} onChange={(event) => void save({ company: event.target.value })}>{companies.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
             <label>Subdivision<select value={core.systemId} onChange={(event) => void save({ systemId: event.target.value })}>{systems.filter((item) => systemFitsCompany(item, core.company)).map((item) => <option key={item.id} value={item.id}>{item.id} · {item.name}</option>)}</select></label>
+            <label>Preparation reminder (minutes before)<input type="number" min="0" max="10080" defaultValue={core.reminders.preparationMinutes} key={`prep-reminder-${core.reminders.preparationMinutes}`} onBlur={(event) => void save({ reminderPreparationMinutes: Number(event.target.value) })} /></label>
+            <label>Start reminder (minutes before)<input type="number" min="0" max="10080" defaultValue={core.reminders.startMinutes} key={`start-reminder-${core.reminders.startMinutes}`} onBlur={(event) => void save({ reminderStartMinutes: Number(event.target.value) })} /></label>
             <label>Place<input defaultValue={core.place} onBlur={(event) => void save({ place: event.target.value })} /></label>
             <label>Link<input defaultValue={core.link} onBlur={(event) => void save({ link: event.target.value })} /></label>
             <form onSubmit={(event) => { event.preventDefault(); const data = new FormData(event.currentTarget); const startAt = String(data.get('start') ?? ''); const endAt = String(data.get('end') ?? ''); if (startAt && endAt) void save({ startAt, endAt }) }}>
@@ -309,6 +313,7 @@ export function MeetingWorkspace({ meetingId, founderId, title, updatedAt: initi
               <button className="pivot-button-secondary" type="submit" disabled={busy}>Save exact time</button>
             </form>
           </details>
+          <MeetingConnections key={core.company} meetingId={meetingId} company={core.company} />
           {nextStage && canTransition(core.lifecycle, nextStage, core) ? <button className="pivot-button-secondary" type="button" disabled={busy} onClick={() => void save({ lifecycle: nextStage })}>Move to {lifecycleLabel(nextStage)}</button> : null}
         </div>
         </div>
@@ -331,16 +336,24 @@ export function MeetingWorkspace({ meetingId, founderId, title, updatedAt: initi
           <p data-testid="notes-save-state">{noteStatus.status === 'saving' ? 'Saving…' : noteStatus.status === 'saved' ? 'Saved' : noteStatus.status === 'error' ? 'Could not save.' : 'Notes save as you type.'}</p>
           {noteStatus.status === 'error' ? <button className="pivot-button-secondary" type="button" onClick={() => void saverRef.current?.retry()}>Retry</button> : null}
           <p>This is the meeting itself. The original request stays separate and is not turned into minutes.</p>
-          <p>Full recordings up to 2 hours are not available yet. These notes stay on the meeting. Audio is not stored here.</p>
+
         </div>
       ) : null}
+      <MeetingRecording meetingId={meetingId} ownerId={founderId} visible={tab === 'notes'} onTranscript={(text) => {
+        if (draftRef.current.meetingTranscript.includes(text)) return
+        const next = [draftRef.current.meetingTranscript, text].filter(Boolean).join('\n\n')
+        if (next.length > 100_000) { setError('This transcript is too long for one meeting. Review it in sections before drafting minutes.'); return }
+        queueNotes({ meetingTranscript: next })
+      }} />
       {tab === 'minutes' ? (
         <div className="meeting-card meeting-panel">
           <button className="pivot-button" type="button" disabled={busy} onClick={() => void draftMinutes()}>Draft minutes from the meeting</button>
           {core.minutes && core.minutes.evidence !== 'none' ? (
             <>
               <p>{core.minutes.discussion || 'No discussion was stated in the meeting notes.'}</p>
+              <h3>Decisions</h3>
               <ul>{core.minutes.decisions.map((item) => <li key={item}>{item}</li>)}</ul>
+              {core.minutes.questions.length ? <><h3>Open questions</h3><ul>{core.minutes.questions.map((question) => <li key={question}>{question}</li>)}</ul></> : null}
               {core.minutes.actions.map((action) => <ActionCard key={action.id} action={action} onChange={(next) => setCore((current) => current.minutes ? { ...current, minutes: { ...current.minutes, actions: current.minutes.actions.map((item) => item.id === action.id ? next : item) } } : current)} />)}
               <button className="pivot-button-secondary" type="button" disabled={busy} onClick={() => void save({ minutesActions: core.minutes?.actions ?? [] })}>Save action routing</button>
             </>
@@ -354,9 +367,9 @@ export function MeetingWorkspace({ meetingId, founderId, title, updatedAt: initi
           {savedWork.length ? <ul className="meeting-follow">{savedWork.map((item) => <li key={item.id}><Link href={workRecordHref(item.id)}>{item.title}</Link><span className="meeting-badge is-neutral">{workStatusLabel(item.status, item.reviewed)}</span></li>)}</ul> : <p>Approved follow-up opens here with its title and status.</p>}
           {core.followUpItemIds.length > savedWork.length ? <p>Some saved work could not be opened.</p> : null}
           <ul className="meeting-pending">
-            <li>Google Calendar sync is not connected. Confirmed times stay in Pivot. Invitations are not sent.</li>
-            <li>WhatsApp reminders are not connected. Nothing is sent one day before or 30 minutes before.</li>
-            <li>Recordings are kept for 30 days only after minutes approval, once private storage exists. It does not exist yet.</li>
+            <li>Check Calendar &amp; reminders in Overview for this meeting’s sync status. Automatic sync never sends invitations.</li>
+            <li>Preparation reminder: {core.reminders.preparationMinutes} minutes before; start reminder: {core.reminders.startMinutes} minutes before. Delivery requires a verified WhatsApp connection and running scheduler.</li>
+            <li>Recording audio is private. Retention starts after minutes approval; check Live notes for storage and transcription status.</li>
           </ul>
         </div>
       ) : null}

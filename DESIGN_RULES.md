@@ -2,6 +2,8 @@
 
 **Authority:** Follows `CONSTITUTION.md` (approved 2026-08-14).
 
+**Current founder direction (2026-10-20):** read `plan/interviews/SHARED.md` for later confirmed decisions, including the Paper/split-desk direction, full inbox visibility and Drikus's preference for a CRM look. `plan/MONDAY_RESEARCH_AND_PRODUCT_DIRECTION.md` records inspected Monday patterns and proposed refinements. Final layout is still under review; older cinematic references below are historical where they conflict with Paper/no photos.
+
 ## Purpose
 Non-negotiable UX quality gate for the Founder Operating System rebuild.
 
@@ -28,7 +30,7 @@ Non-negotiable UX quality gate for the Founder Operating System rebuild.
 ---
 
 ## 3) Information Hierarchy
-- Cards first, tables second.
+- On the founder home, summaries first. On operational Work screens, use tables, pipelines and calendars where they best support the task. These are views of the same records, not duplicated data. See the Monday research proposal for details still awaiting UX validation.
 - Progressive disclosure: summary → list → record detail/history.
 - Surface now: urgent, waiting, revenue-impact, risk.
 - Keep daily screens simple; place structural complexity in a dedicated **Operating Map** view.
@@ -78,6 +80,7 @@ Non-negotiable UX quality gate for the Founder Operating System rebuild.
 ---
 
 ## 8) AI UX
+- Research proposal: case Catch-up & Next actions, source-linked summaries and current/proposed field review. Keep relationship role, company and source direction clear before recommending work. See `plan/PRODUCT_BLUEPRINT.md`; these refinements await prototype validation.
 - Suggest first; approve risky actions.
 - Always show why, what data, what happens next.
 - No fake “sent” unless it really sent.

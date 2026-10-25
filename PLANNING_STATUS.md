@@ -2,9 +2,17 @@
 
 **Current phase:** Phase 1 — Clean Product Foundation. Gate 1 not yet passed.
 
+**Implementation checkpoint — 2026-10-20 (bounded):** landing + preview + protected desk/calendar interaction milestone was wired and verified locally (typecheck/lint/build + browser checks). This does **not** mark a phase gate complete and does not claim live channel integrations. Evidence is in `plan/BUILD_PROGRESS.md`.
+
+**Founder updates — 2026-10-20:** layout exploration is active. Confirmed direction and decisions are in `plan/interviews/SHARED.md`: WhatsApp first; source-specific inboxes and company/section filters; Kraaldesk eventually owns agency operations; Pivot and linked apps replace Google Sheets; every work item is durably saved/tracked; continuous agent learning is a core requirement. See `plan/CONTINUOUS_LEARNING.md` and the cattle seller workflow draft. These are planning decisions, not completed features.
+
+**Combined product proposal:** `plan/PRODUCT_BLUEPRINT.md` now consolidates the Monday and HubSpot findings into navigation, case UX, AI/context/learning behaviour, a staged 40-item feature log and acceptance criteria. `plan/HUBSPOT_RESEARCH_AND_PRODUCT_DIRECTION.md` records the additional evidence and account upgrade limits. Monday findings remain retained. These are proposed refinements, not completed features or final UX approval.
+
 ---
 
 ## Active authority
+
+**Research added 2026-10-20:** `plan/MONDAY_RESEARCH_AND_PRODUCT_DIRECTION.md` proposes shared Table/Pipeline/Calendar views, a case workspace, contextual AI, versioned approval-aware workflows and agent operations/learning visibility. Research is complete within the documented access limits; final UX and build scope remain under review. No implementation or phase-gate completion is implied.
 
 | Rank | Document |
 |---|---|

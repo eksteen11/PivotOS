@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#17724b">
+  <title>You're offline · Pivot OS</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100svh; display: grid; place-items: center; padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom)); background: #f6f3ec; color: #18271f; font: 17px/1.6 system-ui, sans-serif; }
+    main { width: 100%; max-width: 440px; }
+    .brand { color: #17724b; font-weight: 700; }
+    h1 { font-size: clamp(32px, 8vw, 44px); line-height: 1.15; letter-spacing: -1px; }
+    p { color: #536158; }
+    button { margin-top: 16px; padding: 14px 24px; border: 0; border-radius: 12px; background: #17724b; color: white; font: inherit; font-weight: 600; cursor: pointer; }
+    button:focus-visible { outline: 3px solid #18271f; outline-offset: 4px; }
+  </style>
+</head>
+<body>
+  <main>
+    <span class="brand">Pivot OS</span>
+    <h1>Let's reconnect.</h1>
+    <p>You're offline. Connect to the internet to open your workspace and continue working.</p>
+    <p>Your private workspace isn't stored in this offline screen.</p>
+    <button type="button" onclick="window.location.reload()">Try again</button>
+  </main>
+</body>
+</html>
