@@ -1,11 +1,13 @@
 import { companies, getSystem, systemFitsCompany, type Company } from './catalogue'
+import { missingPlanFields, validateActionPlan, type ActionPlan } from './actionPlan'
 
 export type WorkStatus = 'planned' | 'in_progress' | 'waiting' | 'done'
 export type WorkCaseKind = 'task' | 'project' | 'job' | 'build' | 'work' | 'idea' | 'note' | 'handoff' | 'outcome'
-export type WorkCase = { id: string; entityId: string; company: Company; systemId: string; title: string; notes: string; due: string; status: WorkStatus; source: string; updatedAt: string; facts: Record<string, string>; checked: number[]; history: { at: string; text: string }[]; lessons: { text: string; status: 'proposed' }[]; kind: WorkCaseKind; intake?: { sourceCaptureId: string; proposalKind: string; externalBlocked: boolean } }
-export type WorkInput = Pick<WorkCase, 'title' | 'notes' | 'company' | 'systemId' | 'due'>
+export type WorkCase = { id: string; entityId: string; company: Company; systemId: string; title: string; notes: string; due: string; status: WorkStatus; source: string; updatedAt: string; facts: Record<string, string>; checked: number[]; history: { at: string; text: string }[]; lessons: { text: string; status: 'proposed' }[]; kind: WorkCaseKind; plan?: ActionPlan; intake?: { sourceCaptureId: string; proposalKind: string; externalBlocked: boolean } }
+export type WorkInput = Pick<WorkCase, 'title' | 'notes' | 'company' | 'systemId' | 'due' | 'plan'>
 export const statusLabels: Record<WorkStatus, string> = { planned: 'Needs approval', in_progress: 'In progress', waiting: 'Waiting', done: 'Done' }
-export function caseSteps(work: Pick<WorkCase, 'kind' | 'title' | 'systemId'>) {
+export function caseSteps(work: Pick<WorkCase, 'kind' | 'title' | 'systemId' | 'plan'>) {
+  if (work.plan) return work.plan.actions
   if (work.kind === 'task') return [work.title]
   if (work.kind === 'note' || work.kind === 'idea' || work.kind === 'outcome') return []
   return getSystem(work.systemId)?.steps ?? []
@@ -19,19 +21,38 @@ export function validateWorkInput(value: Record<string, unknown>): WorkInput {
   if (!title || title.length > 180 || notes.length > 12000) throw new Error('Add a title of up to 180 characters and notes of up to 12,000 characters.')
   if (!companies.some((c) => c.id === company) || !system || !systemFitsCompany(system, company)) throw new Error('Choose a workflow belonging to this business.')
   if (due && (!/^\d{4}-\d{2}-\d{2}$/.test(due) || new Date(due + 'T12:00:00Z').toISOString().slice(0, 10) !== due)) throw new Error('Choose a valid due date.')
-  return { title, notes, company, systemId: system.id, due }
+  const plan = value.plan === undefined ? undefined : validateActionPlan(value.plan)
+  return { title, notes, company, systemId: system.id, due, ...(plan ? { plan } : {}) }
 }
 export function applyWorkAction(current: WorkCase, action: Record<string, unknown>, now: string): WorkCase {
   const next: WorkCase = { ...current, facts: { ...current.facts }, checked: [...current.checked], lessons: [...current.lessons], history: [...current.history], updatedAt: now }
   const systemSteps = caseSteps(current)
-  if (!systemSteps.length && action.kind !== 'approve' && action.kind !== 'lesson' && action.kind !== 'facts') {
+  if (!systemSteps.length && action.kind !== 'approve' && action.kind !== 'lesson' && action.kind !== 'facts' && action.kind !== 'plan') {
     throw new Error('This record is a saved reference and has no active checklist.')
   }
   let text = ''
-  if (action.kind === 'approve') {
+  if (action.kind === 'plan') {
+    if (!current.plan || current.status !== 'planned') throw new Error('Only an unstarted action plan can be edited.')
+    next.plan = validateActionPlan(action.plan)
+    next.checked = []
+    text = 'Updated the action plan. Approval is required again before starting. Source evidence is unchanged.'
+  } else if (action.kind === 'approve') {
     if (current.status !== 'planned') throw new Error('This work plan is already reviewed.')
-    next.status = systemSteps.length ? 'in_progress' : 'done'
-    text = systemSteps.length ? 'Drikus approved the internal work plan. No external action was authorised.' : 'Drikus accepted this reference record. No work or external action was started.'
+    if (current.plan) {
+      const missing = missingPlanFields(current.plan)
+      if (missing.length) throw new Error(missing[0].question)
+      if (current.plan.approvedAt) throw new Error('This plan is already approved. Record its start separately.')
+      next.plan = { ...current.plan, approvedAt: now }
+      text = 'Drikus approved the action plan. Work has not started. No external action was authorised.'
+    } else {
+      next.status = systemSteps.length ? 'in_progress' : 'done'
+      text = systemSteps.length ? 'Drikus approved the internal work plan. No external action was authorised.' : 'Drikus accepted this reference record. No work or external action was started.'
+    }
+  } else if (action.kind === 'start') {
+    if (!current.plan || current.status !== 'planned' || !current.plan.approvedAt || missingPlanFields(current.plan).length) throw new Error('Complete and approve this action plan before recording its start.')
+    if (current.plan.ownerType === 'agent') throw new Error('Agent execution is not connected. Assign an available person before recording a manual start.')
+    next.status = 'in_progress'
+    text = `Drikus recorded that ${current.plan.owner} started the work. No message or linked-app action was executed by Pivot.`
   } else if (action.kind === 'task') {
     if (current.status === 'planned' || current.status === 'done') throw new Error('Approve the work plan before updating tasks, or reopen completed work.')
     const index = Number(action.index)

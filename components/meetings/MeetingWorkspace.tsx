@@ -10,13 +10,14 @@ import { createAutosave, type AutosaveSnapshot } from '@/lib/meetings/autosave'
 import { meetingTimeLabel } from '@/lib/door/meetings'
 import { boundedFetch, meetingRequestError } from '@/lib/meetings/request'
 import { canTransition, lifecycleLabel, nextQuestion, type MeetingAction, type MeetingCore, type MeetingLifecycle } from '@/lib/meetings/core'
+import { followUpStatusLabel, followUpView, type FollowUpView } from '@/lib/meetings/followUpView'
 import { noteRecoveryDecision, noteRecoveryKey, parseNoteRecovery, type NoteDraft } from '@/lib/meetings/noteRecovery'
-import { workRecordHref, workStatusLabel, workSummary, type WorkSummary } from '@/lib/workspace/workLink'
+import { workRecordHref } from '@/lib/workspace/workLink'
 
 const tabs = ['overview', 'prepare', 'notes', 'minutes', 'follow-up'] as const
 type Tab = (typeof tabs)[number]
 
-export function MeetingWorkspace({ meetingId, founderId, title, updatedAt: initialUpdatedAt, core: initialCore, followUps = [], sourceHref }: { meetingId: string; founderId: string; title: string; updatedAt: string; core: MeetingCore; followUps?: WorkSummary[]; sourceHref: string | null }) {
+export function MeetingWorkspace({ meetingId, founderId, title, updatedAt: initialUpdatedAt, core: initialCore, followUps = [], sourceHref }: { meetingId: string; founderId: string; title: string; updatedAt: string; core: MeetingCore; followUps?: FollowUpView[]; sourceHref: string | null }) {
   const [core, setCore] = useState(initialCore)
   const [updatedAt, setUpdatedAt] = useState(initialUpdatedAt)
   const [name, setName] = useState(title)
@@ -30,7 +31,7 @@ export function MeetingWorkspace({ meetingId, founderId, title, updatedAt: initi
   const [recovery, setRecovery] = useState<NoteDraft | null>(null)
   const [sourceOpen, setSourceOpen] = useState(false)
   const [sourceState, setSourceState] = useState({ loading: false, transcript: '', summary: '', label: '', error: '' })
-  const [savedWork, setSavedWork] = useState<WorkSummary[]>(followUps)
+  const [savedWork, setSavedWork] = useState<FollowUpView[]>(followUps)
   const draftRef = useRef({ liveNotes: initialCore.liveNotes, meetingTranscript: initialCore.meetingTranscript })
   const savedDraft = useRef({ liveNotes: initialCore.liveNotes, meetingTranscript: initialCore.meetingTranscript })
   const saverRef = useRef<ReturnType<typeof createAutosave> | null>(null)
@@ -210,7 +211,7 @@ export function MeetingWorkspace({ meetingId, founderId, title, updatedAt: initi
         setError(String(body.error ?? 'Minutes were not drafted.'))
         return
       }
-      setCore((current) => ({ ...current, minutes: body.minutes, minutesStale: false, lifecycle: 'minutes_review' }))
+      setCore((current) => ({ ...current, minutes: body.minutes, minutesStale: false, approvedRevision: null, lifecycle: 'minutes_review' }))
       const nextStamp = String(body.updatedAt ?? stamp)
       setUpdatedAt(nextStamp)
       saverRef.current?.adopt(nextStamp)
@@ -241,8 +242,8 @@ export function MeetingWorkspace({ meetingId, founderId, title, updatedAt: initi
         setError(String(body.error ?? 'Follow-up was not created.'))
         return
       }
-      const returned = Array.isArray(body.followUps) ? body.followUps.flatMap((item: unknown) => { const summary = workSummary(item); return summary ? [summary] : [] }) : []
-      if (returned.length) setSavedWork(returned)
+      const returned = Array.isArray(body.followUps) ? body.followUps.flatMap((item: unknown) => { const summary = followUpView(item); return summary ? [summary] : [] }) : []
+      setSavedWork(returned)
       setCore((current) => body.meeting ?? { ...current, lifecycle: 'follow_up', approvedRevision: current.minutes?.revision ?? null, followUpItemIds: Array.isArray(body.followUpItemIds) ? body.followUpItemIds : [], minutesStale: false })
       const nextStamp = String(body.updatedAt ?? stamp)
       setUpdatedAt(nextStamp)
@@ -364,7 +365,7 @@ export function MeetingWorkspace({ meetingId, founderId, title, updatedAt: initi
         <div className="meeting-card meeting-panel">
           <p>Review the minutes and actions together. Follow-up work is created only after this approval.</p>
           <button className="pivot-button" type="button" disabled={busy || !core.minutes || core.minutesStale || core.minutes.evidence === 'none'} onClick={() => void approve()}>{core.approvedRevision === core.minutes?.revision ? 'Review already saved' : 'Approve reviewed follow-up'}</button>
-          {savedWork.length ? <ul className="meeting-follow">{savedWork.map((item) => <li key={item.id}><Link href={workRecordHref(item.id)}>{item.title}</Link><span className="meeting-badge is-neutral">{workStatusLabel(item.status, item.reviewed)}</span></li>)}</ul> : <p>Approved follow-up opens here with its title and status.</p>}
+          {savedWork.length ? <ul className="meeting-follow">{savedWork.map((item) => <li key={item.id}><Link href={workRecordHref(item.id)}>{item.title}</Link><span className="meeting-badge is-neutral">{followUpStatusLabel(item.status, item.reviewed)}</span></li>)}</ul> : <p>Approved follow-up opens here with its title and status.</p>}
           {core.followUpItemIds.length > savedWork.length ? <p>Some saved work could not be opened.</p> : null}
           <ul className="meeting-pending">
             <li>Check Calendar &amp; reminders in Overview for this meeting’s sync status. Automatic sync never sends invitations.</li>

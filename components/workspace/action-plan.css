@@ -1,0 +1,13 @@
+.workspace-paper .pivot-plan-summary{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:24px 0;font-size:14px}
+.workspace-paper .pivot-plan-summary>div{min-width:0;border-top:1px solid var(--p-border);padding-top:12px}
+.workspace-paper .pivot-plan-summary dt{font-size:12px;color:var(--p-muted);margin-bottom:5px}
+.workspace-paper .pivot-plan-summary dd{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}
+.workspace-paper .pivot-new-work-fields ol,.workspace-paper section[aria-label="Actions to complete"] ol,.workspace-paper section[aria-label="Actions identified"] ol{list-style:decimal;padding-left:24px;margin:16px 0}
+.workspace-paper .pivot-new-work-fields li,.workspace-paper section[aria-label="Actions to complete"] li,.workspace-paper section[aria-label="Actions identified"] li{padding:6px 0;overflow-wrap:anywhere}
+.workspace-paper .pivot-new-work-fields details>label{display:flex;flex-direction:column;gap:8px;margin:16px 0}
+.workspace-paper .pivot-new-work-fields .pivot-intake-chat-round{display:flex;flex-direction:column;gap:16px;background:#f5f8ef;border:1px solid var(--p-border);border-radius:9px;padding:20px}
+.workspace-paper .pivot-intake-chat-round>label{display:flex;flex-direction:column;gap:8px}
+.workspace-paper .pivot-intake-chat-round>button{align-self:flex-start}
+.workspace-paper .pivot-facts-form>details>label{display:flex;flex-direction:column;gap:8px;margin:16px 0}
+.workspace-paper .pivot-work-table td>small{display:block;max-width:320px;overflow-wrap:anywhere;white-space:normal}
+@media(max-width:600px){.workspace-paper .pivot-plan-summary{grid-template-columns:1fr;gap:15px}.workspace-paper .pivot-new-work-fields .pivot-intake-chat-round{padding:16px}.workspace-paper .pivot-plan-summary dd{font-size:14px}}

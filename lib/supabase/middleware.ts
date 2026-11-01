@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
+import { needsSecondFactor } from '@/lib/auth/mfa'
+import { safeNextPath } from '@/lib/auth/navigation'
 import { hasSupabaseEnv, supabaseAnonKey, supabaseUrl } from '@/lib/env'
 
 const APP_PREFIXES = [
@@ -60,6 +62,19 @@ export async function updateSession(request: NextRequest) {
     if (!isApp) return supabaseResponse
   }
 
+  if (user && (isApp || path.startsWith('/api/') || path === '/login')) {
+    try {
+      if (await needsSecondFactor(supabase)) {
+        if (path.startsWith('/api/')) return NextResponse.json({ error: 'Second-factor verification required', code: 'mfa_required' }, { status: 403, headers: { 'Cache-Control': 'no-store' } })
+        const url = new URL('/verify', request.url)
+        url.searchParams.set('next', path === '/login' ? safeNextPath(request.nextUrl.searchParams.get('next')) : `${path}${request.nextUrl.search}`)
+        return redirectTo(url)
+      }
+    } catch {
+      return NextResponse.json({ error: 'Sign-in protection is temporarily unavailable. Please try again.' }, { status: 503, headers: { 'Cache-Control': 'no-store' } })
+    }
+  }
+
   if (user && isApp) {
     const { data: profile } = await supabase
       .from('profiles')
@@ -84,8 +99,9 @@ export async function updateSession(request: NextRequest) {
 
   if (user && path === '/login') {
     const url = request.nextUrl.clone()
-    url.pathname = '/today'
-    url.search = ''
+    const target = new URL(safeNextPath(request.nextUrl.searchParams.get('next')), request.url)
+    url.pathname = target.pathname
+    url.search = target.search
     return redirectTo(url)
   }
 

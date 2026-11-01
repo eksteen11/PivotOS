@@ -1,4 +1,5 @@
 import { asCompany, clampText, hasValidMeetingWindow, intakeProposalKinds, isLocalDateTime, isUuid, validSystemForCompany, type IntakeProposal } from '@/lib/intake/shared'
+import { emptyActionPlan, validateActionPlan } from '@/lib/workspace/actionPlan'
 
 export function validateSessionIds(sourceCaptureId: string, idempotencyKey: string) {
   return isUuid(sourceCaptureId) && isUuid(idempotencyKey)
@@ -25,6 +26,14 @@ export function normalizeProposal(value: unknown): IntakeProposal | null {
   if (endAt && !isLocalDateTime(endAt)) return null
   const confirmedSchedule = Boolean(meeting.confirmedSchedule)
   if (confirmedSchedule && !hasValidMeetingWindow(startAt, endAt)) return null
+  let plan
+  if (!['meeting', 'note', 'idea', 'outcome'].includes(kind)) {
+    try {
+      plan = row.plan === undefined ? emptyActionPlan([title]) : validateActionPlan(row.plan)
+    } catch {
+      return null
+    }
+  }
   return {
     proposalId,
     kind,
@@ -41,6 +50,7 @@ export function normalizeProposal(value: unknown): IntakeProposal | null {
           })
           .slice(0, 10)
       : [],
+    ...(plan ? { plan } : {}),
     meeting: {
       confirmedSchedule,
       startAt,

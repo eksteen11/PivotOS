@@ -7,6 +7,14 @@ export function isReviewedMeetingWork(source: string) {
   return source === 'meeting-follow-up' || source === 'Meeting follow-up'
 }
 
+export function isReviewedIntakeWork(source: string) {
+  return source === 'WhatsApp intake approval' || source === 'whatsapp-intake'
+}
+
+export function isFounderReviewedWork(source: string) {
+  return isReviewedMeetingWork(source) || isReviewedIntakeWork(source)
+}
+
 const statuses = new Set<WorkStatus>(['planned', 'in_progress', 'waiting', 'done'])
 
 export function workRecordHref(id: string) {
@@ -20,7 +28,8 @@ export function workSummary(value: unknown): WorkSummary | null {
   const status = String(row.status ?? '') as WorkStatus
   const title = String(row.title ?? '').trim()
   if (!isUuid(id) || !statuses.has(status) || !title) return null
-  const reviewed = row.reviewed === true || isReviewedMeetingWork(String(row.source ?? ''))
+  const source = String(row.source ?? '')
+  const reviewed = row.reviewed === true || isFounderReviewedWork(source)
   return { id, title: title.slice(0, 180), status, reviewed }
 }
 
@@ -30,10 +39,12 @@ export function workStatusLabel(status: WorkStatus, reviewed = false) {
 }
 
 export function reviewedWorkStart(status: WorkStatus, source: string) {
-  if (status !== 'planned' || !isReviewedMeetingWork(source)) return null
+  if (status !== 'planned' || !isFounderReviewedWork(source)) return null
   return {
     heading: 'Ready to start',
-    detail: 'This internal task is ready to start. Replies, bookings, posts and transactions still need their own review and a connected tool.',
+    detail: isReviewedIntakeWork(source)
+      ? 'Approved from WhatsApp intake with source evidence retained. Listing publish, replies and other external actions stay blocked until separately reviewed.'
+      : 'This internal task is ready to start. Replies, bookings, posts and transactions still need their own review and a connected tool.',
     action: 'Start this work',
     checklistNote: 'Start this work from Overview before using the checklist. External actions stay blocked.',
   }

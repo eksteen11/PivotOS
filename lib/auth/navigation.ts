@@ -3,7 +3,7 @@ export function safeNextPath(value: string | null | undefined, fallback = '/toda
   if (!value || !value.startsWith('/') || value.startsWith('//') || (value.includes('\\') || [...value].some((char) => char.charCodeAt(0) <= 32))) return fallback
   try {
     const url = new URL(value, 'https://pivot.invalid')
-    if (url.origin !== 'https://pivot.invalid' || /^\/(auth|login|register)(\/|$)/.test(url.pathname)) return fallback
+    if (url.origin !== 'https://pivot.invalid' || /^\/(auth|login|register|verify)(\/|$)/.test(url.pathname)) return fallback
     return `${url.pathname}${url.search}${url.hash}`
   } catch { return fallback }
 }

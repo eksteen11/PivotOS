@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
 
 import { readJsonBody } from '@/lib/http/readJson'
+import { isUuid } from '@/lib/intake/shared'
 import { requireFounderSession, sameOrigin } from '@/lib/intake/server'
 import { entitySlugFrom, founderCanAccess, itemStatusForLifecycle, readMeetingCore, type MeetingCore } from '@/lib/meetings/core'
+import { followUpView, visibleFollowUp } from '@/lib/meetings/followUpView'
 import { commitReviewedFollowUp, type ReviewStore, type ReviewTask } from '@/lib/meetings/reviewCommit'
-import { companies } from '@/lib/workspace/catalogue'
-import { workSummary } from '@/lib/workspace/workLink'
+import { companies, type Company } from '@/lib/workspace/catalogue'
 
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return NextResponse.json({ error: 'Request origin is not allowed.' }, { status: 403 })
@@ -87,12 +88,40 @@ export async function POST(request: Request) {
       const { data } = await auth.sb.from('entities').select('id').eq('user_id', auth.user.id).eq('slug', slug).maybeSingle()
       return data?.id ? String(data.id) : ''
     },
+    async readOutcomes(ids) {
+      const unique = [...new Set(ids.filter((item) => isUuid(item)))]
+      if (!unique.length) return []
+      const { data: owned } = await auth.sb.from('entities').select('id, slug').eq('user_id', auth.user.id)
+      const entityCompany = new Map<string, Company>()
+      for (const entity of owned ?? []) {
+        const company = companies.find((entry) => entry.slug === entity.slug)?.id
+        if (company && entity.id) entityCompany.set(String(entity.id), company)
+      }
+      const rows = []
+      for (let index = 0; index < unique.length; index += 100) {
+        const { data } = await auth.sb.from('items').select('id,user_id,entity_id,title,status,meta').in('id', unique.slice(index, index + 100)).eq('user_id', auth.user.id).is('deleted_at', null)
+        rows.push(...(data ?? []))
+      }
+      const byId = new Map(rows.map((row) => [String(row.id), row]))
+      return unique.flatMap((itemId) => {
+        const row = byId.get(itemId)
+        if (!row) return []
+        const outcome = visibleFollowUp({
+          id: String(row.id),
+          user_id: String(row.user_id),
+          entity_id: row.entity_id ? String(row.entity_id) : null,
+          title: typeof row.title === 'string' ? row.title : null,
+          status: typeof row.status === 'string' ? row.status : null,
+          meta: (row.meta as Record<string, unknown> | null) ?? {},
+        }, auth.user.id, entityCompany)
+        return outcome ? [outcome] : []
+      })
+    },
   }
   const result = await commitReviewedFollowUp(store, { meetingId: id, expectedUpdatedAt: String(body.updatedAt ?? ''), revision, actions: body.actions })
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status })
-  const actions = (result.meeting.reviewClaim?.actions ?? []).filter((action) => action.include)
-  const followUps = result.followUpItemIds.flatMap((id, index) => {
-    const summary = workSummary({ id, title: actions[index]?.title ?? '', status: 'planned', reviewed: true, source: 'meeting-follow-up' })
+  const followUps = result.outcomes.flatMap((outcome) => {
+    const summary = followUpView({ ...outcome, reviewed: true, source: 'meeting-follow-up' })
     return summary ? [summary] : []
   })
   return NextResponse.json({ followUpItemIds: result.followUpItemIds, followUps, alreadyApproved: result.alreadyApproved, updatedAt: result.updatedAt, meeting: result.meeting satisfies MeetingCore })

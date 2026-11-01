@@ -1,6 +1,7 @@
 import { companies, systems } from '@/lib/workspace/catalogue'
 import { clampText, intakeProposalKinds, intakeSourceLabels, isUuid, type IntakeProposal, type IntakeQuestion } from '@/lib/intake/shared'
 import { normalizeProposal } from '@/lib/intake/validators'
+import { planFields } from '@/lib/workspace/actionPlan'
 
 export type IntakeAnalysis = {
   language: string
@@ -40,7 +41,7 @@ export function intakeAnalysisSchema() {
         items: {
           type: 'object',
           additionalProperties: false,
-          required: ['kind', 'title', 'company', 'systemId', 'notes', 'requiresExternalApproval', 'uncertainties', 'meeting'],
+          required: ['kind', 'title', 'company', 'systemId', 'notes', 'requiresExternalApproval', 'uncertainties', 'plan', 'meeting'],
           properties: {
             kind: { type: 'string', enum: [...intakeProposalKinds] },
             title: { type: 'string' },
@@ -49,6 +50,16 @@ export function intakeAnalysisSchema() {
             notes: { type: 'string' },
             requiresExternalApproval: { type: 'boolean' },
             uncertainties: { type: 'array', maxItems: 10, items: { type: 'string' } },
+            plan: {
+              type: 'object', additionalProperties: false,
+              required: ['version', 'actions', 'ownerType', ...planFields.map(({ key }) => key)],
+              properties: {
+                version: { type: 'integer', enum: [1] },
+                actions: { type: 'array', minItems: 1, maxItems: 8, items: { type: 'string' } },
+                ownerType: { type: 'string', enum: ['person', 'agent'] },
+                ...Object.fromEntries(planFields.map(({ key }) => [key, { type: 'string' }])),
+              },
+            },
             meeting: {
               type: 'object',
               additionalProperties: false,
@@ -88,6 +99,10 @@ export function intakeAnalysisPrompt() {
   }))
   return [
     'You are Pivot OS conversational intake extraction.',
+    'Work action-first: identify requested actions before routing them. Each operational proposal includes plan.version 1, actions in execution order, forWhom (person/customer/project), outcome, owner, ownerType (person or agent), method, tools, inputs and timing/dependencies.',
+    'Only name an owner, recipient, tool, input or timing when supported by the transcript or newest clarification. Leave unknown plan fields as empty strings. Do not default unknown ownership to Drikus or invent an agent, connected tool, due date, or permission. Proposed methods must remain suggestions in the notes.',
+    'For notes, ideas, outcomes and meetings, return the same plan object shape with actions containing the title; their existing reference or meeting workflow remains authoritative.',
+    'Keep each proposal in one business and division. Personal, family, church and private context belongs only to personal. If business routing is ambiguous, ask explicitly before approval; never infer a business from a customer name alone.',
     'Input language may be English, Afrikaans, or mixed South African language. Keep original language in transcript-derived text.',
     'Do not invent database ids. The server assigns every proposal id.',
     'questions[] must contain only essential missing details that block safe planning. Never ask again for a fact already present in the transcript or in clarifications.',

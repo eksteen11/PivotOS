@@ -5,6 +5,7 @@ import { Suspense, useState } from 'react'
 import { AuthConnectionBanner } from '@/components/auth/AuthConnectionBanner'
 import { AuthShell } from '@/components/auth/AuthShell'
 import { PasswordField } from '@/components/auth/PasswordField'
+import { needsSecondFactor } from '@/lib/auth/mfa'
 import { safeNextPath } from '@/lib/auth/navigation'
 import { getSupabaseBrowser } from '@/lib/supabase/browser'
 
@@ -22,7 +23,8 @@ function LoginForm() {
       if (!sb) throw new Error('Sign-in is temporarily unavailable. Please try again shortly.')
       const { error } = await sb.auth.signInWithPassword({ email: email.trim(), password })
       if (error) throw error
-      router.replace(safeNextPath(params.get('next'))); router.refresh()
+      const next = safeNextPath(params.get('next'))
+      router.replace(await needsSecondFactor(sb) ? `/verify?next=${encodeURIComponent(next)}` : next); router.refresh()
     } catch (error) { setError(error instanceof Error ? error.message : 'Could not sign in. Please try again.') }
     finally { setBusy(false) }
   }

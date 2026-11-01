@@ -1,0 +1,215 @@
+.wa-inbox {
+  display: grid;
+  gap: 1rem;
+}
+
+.wa-inbox-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.wa-inbox-toolbar p {
+  margin: 0.2rem 0 0;
+  color: color-mix(in srgb, var(--pivot-ink, #1c1917) 72%, transparent);
+  max-width: 42rem;
+}
+
+.wa-capability {
+  border-top: 1px solid color-mix(in srgb, var(--pivot-ink, #1c1917) 12%, transparent);
+  padding-top: 0.6rem;
+}
+
+.wa-capability ul {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.wa-capability li p {
+  margin: 0.25rem 0 0;
+}
+
+.wa-cap-status {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.wa-cap-status.is-supported { color: #166534; }
+.wa-cap-status.is-not-supported,
+.wa-cap-status.is-blocked-for-acceptance { color: #9a3412; }
+.wa-cap-status.is-unverified,
+.wa-cap-status.is-local-only { color: #92400e; }
+
+.wa-inbox-split {
+  display: grid;
+  grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr);
+  gap: 0.75rem;
+  min-height: 28rem;
+}
+
+.wa-thread-list,
+.wa-thread {
+  border: 1px solid color-mix(in srgb, var(--pivot-ink, #1c1917) 12%, transparent);
+  background: color-mix(in srgb, white 88%, var(--pivot-paper, #f5f1ea));
+  padding: 0.75rem;
+}
+
+.wa-thread-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.wa-thread-list button {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 0.65rem 0.5rem;
+  cursor: pointer;
+}
+
+.wa-thread-list button.is-active,
+.wa-thread-list button:hover {
+  background: color-mix(in srgb, var(--pivot-accent, #2f5d50) 10%, white);
+}
+
+.wa-thread-list small {
+  display: block;
+  margin-top: 0.15rem;
+  opacity: 0.75;
+}
+
+.wa-unread {
+  align-self: center;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  background: var(--pivot-accent, #2f5d50);
+  color: white;
+  font-size: 0.75rem;
+}
+
+.wa-thread {
+  display: grid;
+  gap: 0.85rem;
+  align-content: start;
+}
+
+.wa-thread-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.wa-thread-head h3 {
+  margin: 0;
+}
+
+.wa-thread-head p {
+  margin: 0.25rem 0 0;
+}
+
+.wa-messages {
+  display: grid;
+  gap: 0.55rem;
+  max-height: 18rem;
+  overflow: auto;
+}
+
+.wa-bubble {
+  padding: 0.65rem 0.75rem;
+  max-width: 85%;
+  background: color-mix(in srgb, white 92%, #d6d3d1);
+}
+
+.wa-bubble.is-inbound { justify-self: start; }
+.wa-bubble.is-outbound,
+.wa-bubble.is-echo { justify-self: end; background: color-mix(in srgb, var(--pivot-accent, #2f5d50) 14%, white); }
+
+.wa-bubble small {
+  display: block;
+  margin-bottom: 0.25rem;
+  opacity: 0.7;
+}
+
+.wa-bubble p,
+.wa-teach p,
+.wa-memory p,
+.wa-media-panel p {
+  margin: 0;
+}
+
+.wa-warn {
+  color: #9a3412;
+  background: color-mix(in srgb, #fb923c 16%, white);
+  padding: 0.55rem 0.7rem;
+}
+
+.wa-warn button,
+.wa-memory-actions button,
+.wa-tools button {
+  margin-left: 0.5rem;
+  border: 0;
+  background: transparent;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.wa-teach,
+.wa-memory,
+.wa-media-panel,
+.wa-transcripts,
+.wa-compose {
+  display: grid;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid color-mix(in srgb, var(--pivot-ink, #1c1917) 10%, transparent);
+}
+
+.wa-transcripts {
+  grid-template-columns: 1fr 1fr;
+}
+
+.wa-compose textarea,
+.wa-teach textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 4.5rem;
+  padding: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--pivot-ink, #1c1917) 18%, transparent);
+  background: white;
+}
+
+.wa-compose-actions,
+.wa-tools,
+.wa-memory-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.wa-empty {
+  margin: 0;
+  opacity: 0.8;
+}
+
+@media (max-width: 820px) {
+  .wa-inbox-split,
+  .wa-transcripts {
+    grid-template-columns: 1fr;
+  }
+}

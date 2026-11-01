@@ -227,7 +227,7 @@ function readStored(row: Record<string, unknown>, dueAt: string | null, entitySl
     } : null,
     minutesStale: Boolean(row.minutesStale),
     approvedRevision: Number.isInteger(row.approvedRevision) ? Number(row.approvedRevision) : null,
-    followUpItemIds: Array.isArray(row.followUpItemIds) ? row.followUpItemIds.map(String).filter(isUuid).slice(0, 20) : [],
+    followUpItemIds: Array.isArray(row.followUpItemIds) ? row.followUpItemIds.map(String).filter(isUuid) : [],
     reviewClaim: readClaim(row.reviewClaim),
     sourceCaptureId: typeof row.sourceCaptureId === 'string' && isUuid(row.sourceCaptureId) ? row.sourceCaptureId : null,
     clarifications: Array.isArray(row.clarifications) ? row.clarifications.slice(0, 8).map((item) => {
@@ -328,7 +328,7 @@ export function canTransition(from: MeetingLifecycle, to: MeetingLifecycle, core
   if (to === 'scheduled' && !core.schedule.confirmed && !core.legacySchedule) return false
   if (to === 'ready' && core.prep.some((item) => !item.done)) return false
   if (to === 'minutes_review' && !core.liveNotes.trim() && !core.meetingTranscript.trim() && !core.minutes) return false
-  if (to === 'follow_up' && core.approvedRevision == null) return false
+  if (to === 'follow_up' && (!core.minutes || core.minutesStale || core.approvedRevision !== core.minutes.revision)) return false
   return true
 }
 
@@ -384,8 +384,11 @@ export function applyMeetingPatch(current: MeetingCore, patch: MeetingPatch, exi
   }
   if (patch.prep) next.prep = patch.prep.map(prepItem).filter((item): item is MeetingPrepItem => Boolean(item)).slice(0, 16)
   if (patch.minutesActions && next.minutes) {
-    next.minutes.actions = reviewedActions(patch.minutesActions)
-    if (current.approvedRevision != null) {
+    const actions = reviewedActions(patch.minutesActions)
+    const signature = (items: MeetingAction[]) => JSON.stringify(items.map((item) => [item.id, item.title, item.include, item.company, item.systemId, item.owner, item.due]))
+    const changed = signature(reviewedActions(next.minutes.actions)) !== signature(actions)
+    next.minutes.actions = actions
+    if (changed && current.approvedRevision != null) {
       next.minutes.revision += 1
       next.approvedRevision = null
       next.minutesStale = false

@@ -1,0 +1,30 @@
+.ff004{--ink:#17251e;--muted:#61705f;--line:#dde3d7;--green:#17724b;--paper:#faf9f5;--card:#fff;color:var(--ink);background:var(--paper);font-family:Manrope,system-ui,sans-serif;font-size:16px;line-height:1.5;padding:24px;max-width:920px}
+.ff004 *{box-sizing:border-box}
+.ff004 h1{font-size:32px;line-height:1.2;letter-spacing:-.4px;margin:8px 0}
+.ff004 h2{font-size:20px;margin:0 0 8px}
+.ff004 h3{font-size:16px;margin:16px 0 4px}
+.ff004 p{margin:0}
+.ff004-kicker{color:var(--green);font-size:13px;font-weight:700;letter-spacing:.04em}
+.ff004-lead{color:var(--muted);max-width:62ch;margin:8px 0 20px}
+.ff004-switch{display:flex;gap:8px;margin-bottom:16px}
+.ff004-switch button,.ff004 button,.ff004 select,.ff004 input{font:inherit}
+.ff004-switch button{min-height:44px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+.ff004-switch button[aria-pressed="true"]{background:#e8efdd;border-color:#cad8bd;color:#244e30;font-weight:700}
+.ff004-grid{display:grid;grid-template-columns:1fr;gap:12px}
+.ff004 label{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:600}
+.ff004 button{min-height:44px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+.ff004 input,.ff004 select{min-height:44px;border:1px solid #d8e0cf;border-radius:8px;padding:8px 12px;background:#fff;color:var(--ink)}
+.ff004-actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:16px}
+.ff004 button.ff004-primary{min-height:48px;padding:12px 18px;border:0;border-radius:9px;background:var(--green);color:#fff;font-weight:700}
+.ff004-primary:disabled{opacity:.55}
+.ff004-card{margin-top:20px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+.ff004-card dl{display:grid;grid-template-columns:1fr;gap:10px;margin:12px 0}
+.ff004-card dt{font-size:13px;color:var(--muted)}
+.ff004-card dd{margin:0}
+.ff004-list{margin:8px 0 0;padding-left:18px}
+.ff004-note,.ff004-alert{margin-top:12px;padding:12px 14px;border-radius:8px}
+.ff004-note{background:#f0f3e9;color:#52694b}
+.ff004-alert{background:#fff4f0;color:#6d2e1f}
+.ff004 details{margin-top:16px}
+.ff004 summary{min-height:44px;display:flex;align-items:center;cursor:pointer}
+@media (min-width:800px){.ff004-grid,.ff004-card dl{grid-template-columns:1fr 1fr}}

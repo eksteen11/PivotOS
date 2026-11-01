@@ -1,5 +1,6 @@
 import { companies, getSystem, systemFitsCompany } from './catalogue'
 import type { WorkCase } from './model'
+import { readActionPlan } from './actionPlan'
 
 const WORK_STATUSES = new Set<WorkCase['status']>(['planned', 'in_progress', 'waiting', 'done'])
 
@@ -62,6 +63,7 @@ export function caseFromRow(row: Record<string, unknown>): WorkCase | null {
 
   const statusFromRow = asString(row.status)
   if (!WORK_STATUSES.has(statusFromRow as WorkCase['status'])) return null
+  const plan = readActionPlan(data.plan)
 
   return {
     id: asString(row.id),
@@ -79,6 +81,7 @@ export function caseFromRow(row: Record<string, unknown>): WorkCase | null {
     checked: asIndexList(data.checked),
     history: asHistory(data.history),
     lessons: asLessons(data.lessons),
+    ...(plan ? { plan } : {}),
     intake: {
       sourceCaptureId: asString(intake?.sourceCaptureId, asString(data.sourceCaptureId)),
       proposalKind: asString(intake?.proposalKind, asString(data.proposalKind)),

@@ -1,0 +1,17 @@
+export const module006Integration = {
+  moduleId: '006',
+  product: 'Pivot OS',
+  company: 'digikraal',
+  distinctFrom: '003',
+  identity: 'DigiKraal principal property investment. Not Northpoint Realty and not an estate-agency file.',
+  storage: 'No schema in this slice. Persist the desk state only after the CEO assigns a shared writer.',
+  auth: 'Use the existing founder boundary. This module does not sign anyone in.',
+  privacy: 'Show a record only when the company is DigiKraal. Do not surface it in Personal, Farm Feed or Northpoint.',
+  approval: 'A reviewed ceiling is an internal limit. It does not approve a bid, OTP, deposit, transfer or finance release.',
+  audit: 'Keep prior ceiling reviews in the module history. The shared audit log is a CEO integration.',
+  evidence: 'Unknown amounts stay unknown. Asking prices, opinions, estimates, municipal values and auction claims do not become achieved sales.',
+  valuation: 'Ranges use adjusted registered transfers or signed transaction evidence only. They are decision support, not a professional valuation.',
+  execution: 'place bid, prepare contract and release finance are refused.',
+  external: 'No portal, attorney, bank, email, WhatsApp or payment call is made.',
+  formula: '006-bid-ceiling-v1 uses the entered exit, costs, profit, safety margin, return and capital. It does not contain statutory transfer-duty or fee tables.',
+} as const

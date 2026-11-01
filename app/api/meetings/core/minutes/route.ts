@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     if (typeof content !== 'string') return NextResponse.json({ error: 'Minutes drafting returned an empty response.' }, { status: 502 })
     const minutes = minutesFromModel(content, evidence.kind)
     minutes.revision = (current.minutes?.revision ?? 0) + 1
-    const next = { ...current, lifecycle: 'minutes_review' as const, minutes, minutesStale: false }
+    const next = { ...current, lifecycle: 'minutes_review' as const, minutes, minutesStale: false, approvedRevision: null }
     const now = new Date().toISOString()
     const { data, error } = await auth.sb.from('items').update({
       status: itemStatusForLifecycle(next.lifecycle),

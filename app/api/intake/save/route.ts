@@ -273,6 +273,7 @@ export async function POST(request: Request) {
       company: proposal.company,
       systemId: proposal.systemId,
       kind: proposal.kind,
+      ...(proposal.plan ? { plan: proposal.plan } : {}),
       title: proposal.title,
       notes: `${proposal.notes}\n\nSource transcript linked (capture: ${sourceCaptureId}). Saving does not execute any external action.`,
       due: '',

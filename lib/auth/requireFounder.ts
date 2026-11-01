@@ -1,3 +1,4 @@
+import { needsSecondFactor } from '@/lib/auth/mfa'
 import { redirect } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/server'
@@ -6,6 +7,7 @@ export async function requireFounder() {
   const sb = await createClient()
   const { data: { user } } = await sb.auth.getUser()
   if (!user) redirect('/login')
+  if (await needsSecondFactor(sb)) redirect('/verify')
 
   const { data: profile } = await sb
     .from('profiles')

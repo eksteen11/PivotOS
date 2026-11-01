@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { AuthShell } from '@/components/auth/AuthShell'
 import { PasswordField } from '@/components/auth/PasswordField'
 import { getSupabaseBrowser } from '@/lib/supabase/browser'
+import { needsSecondFactor } from '@/lib/auth/mfa'
+import { isRecoverySession } from '@/lib/auth/recovery'
 export default function ResetPasswordPage() {
   const [ready, setReady] = useState(false)
   const [password, setPassword] = useState('')
@@ -15,7 +17,16 @@ export default function ResetPasswordPage() {
     let cancelled = false
     const sb = getSupabaseBrowser()
     if (!sb) { setError('Password recovery is temporarily unavailable.'); return }
-    void sb.auth.getUser().then(({ data, error }) => { if (!cancelled) { setReady(Boolean(data.user) && !error); if (!data.user || error) setError('Open a valid password reset link from your email to continue.') } }).catch(() => { if (!cancelled) setError('Could not verify the reset link. Request a new one.') })
+    async function verifyRecovery() {
+      if (!sb) return
+      const [user, claims] = await Promise.all([sb.auth.getUser(), sb.auth.getClaims()])
+      const valid = Boolean(user.data.user) && !user.error && !claims.error && isRecoverySession(claims.data?.claims)
+      if (cancelled) return
+      if (!valid) { setError('Open a valid password reset link from your email to continue.'); return }
+      if (await needsSecondFactor(sb)) { window.location.assign('/verify?next=/reset-password'); return }
+      if (!cancelled) setReady(true)
+    }
+    void verifyRecovery().catch(() => { if (!cancelled) setError('Could not verify the reset link. Request a new one.') })
     return () => { cancelled = true }
   }, [])
   async function submit(e: React.FormEvent) {
@@ -26,7 +37,8 @@ export default function ResetPasswordPage() {
       const sb = getSupabaseBrowser()
       if (!sb) throw new Error('Password recovery is temporarily unavailable.')
       const { error } = await sb.auth.updateUser({ password })
-      if (error) throw error
+      if (error) { if (error.code === 'current_password_required') throw new Error('This session is not a password recovery session. Request a new reset link.'); throw error }
+      setPassword(''); setConfirm(''); setReady(false)
       const { error: signOutError } = await sb.auth.signOut({ scope: 'global' })
       setDone(true)
       if (signOutError) setError('Your password was updated, but signing out did not complete. Open Account & security to sign out your other sessions.')

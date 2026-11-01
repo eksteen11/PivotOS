@@ -9,6 +9,8 @@ import { AUDIO_FILE_ACCEPT, assessAudioUpload, normalizeMime, UNSUPPORTED_AUDIO_
 import { intakeSourceLabels, toSastIso, type IntakeProposal, type IntakeQuestion, type IntakeSourceLabel } from '@/lib/intake/shared'
 import { Dialog } from './WorkDialog'
 import { PivotIcon } from './PivotIcon'
+import { PlanFields, PlanSummary } from './ActionPlanReview'
+import { missingPlanFields } from '@/lib/workspace/actionPlan'
 
 type Meeting = { id: string; title: string; company: string; timeLabel: string; people: string; place: string; startsAt?: string }
 
@@ -316,7 +318,6 @@ export function IntakeComposerDialog({
       const nextLanguage = String(body.language ?? '')
       const nextSummary = String(body.summary ?? '')
       const nextProposals = Array.isArray(body.proposals) ? body.proposals as IntakeProposal[] : []
-      const nextClarifications = clarificationOverride ?? clarifications
       setLanguage(nextLanguage)
       setSummary(nextSummary)
       setQuestions(Array.isArray(body.questions) ? body.questions : [])
@@ -325,28 +326,7 @@ export function IntakeComposerDialog({
       setExpandedProposalIds([])
       setReplyDraft('')
       setAnalysisStale(false)
-      const meetings = nextProposals.filter((proposal) => proposal.kind === 'meeting')
-      if (meetings.length && !preview) {
-        const saved = await fetch('/api/intake/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            sourceCaptureId: captureId,
-            idempotencyKey,
-            sourceLabel,
-            transcript,
-            language: nextLanguage,
-            summary: nextSummary,
-            clarifications: nextClarifications,
-            transcriptMetadata: audioMeta,
-            proposals: meetings,
-          }),
-        })
-        const savedBody = await saved.json().catch(() => ({}))
-        if (!saved.ok) throw new Error(String(savedBody.error ?? 'The meeting was not saved.'))
-        onSaved({ workCases: Array.isArray(savedBody.saved?.workCases) ? savedBody.saved.workCases : [], meetings: Array.isArray(savedBody.saved?.meetings) ? savedBody.saved.meetings : [] })
-      }
-      setNotice(meetings.length ? 'The meeting is saved. Other plans still wait for Save.' : 'Review the plan below. Nothing has started yet.')
+      setNotice('Review the actions first, then the people, business and plan. Nothing has been saved or started.')
     } catch (analysisError) {
       setError(analysisError instanceof Error ? analysisError.message : 'Analysis failed.')
     } finally {
@@ -525,6 +505,7 @@ export function IntakeComposerDialog({
           ? 'Pivot couldn’t verify this page’s address. Your text is still here. Reopen Pivot using its usual address, then try again.'
           : error}</p> : null}
         {notice ? <p className="pivot-notice">{notice}</p> : null}
+        {visibleProposals.length ? <section aria-label="Actions identified"><h3>1. Actions to complete</h3><ol>{visibleProposals.flatMap((proposal) => (proposal.plan?.actions ?? [proposal.title]).map((action, index) => <li key={`${proposal.proposalId}:${index}`}>{action}</li>))}</ol><p>Review who each action is for, its business and division, then the plan below.</p></section> : null}
         {nextQuestion ? (
           <div className="pivot-intake-chat-round">
             <p className="pivot-intake-chat-question">{nextQuestion.question}</p>
@@ -547,16 +528,16 @@ export function IntakeComposerDialog({
         ) : null}
         {visibleProposals.length ? (
           <div className="pivot-intake-proposals">
-            <h3>Here’s the plan</h3>
+            <h3>2. Who, where & how</h3>
             {visibleProposals.map((proposal) => {
               const index = proposals.findIndex((item) => item.proposalId === proposal.proposalId)
               const expanded = expandedProposalIds.includes(proposal.proposalId)
               const meetingStatus =
                 proposal.kind === 'meeting' && proposal.meeting.confirmedSchedule && proposal.meeting.startAt && proposal.meeting.endAt
-                  ? `Scheduled ${localTimeLabel(toSastIso(proposal.meeting.startAt))}`
+                  ? `Proposed time: ${localTimeLabel(toSastIso(proposal.meeting.startAt))}`
                   : proposal.kind === 'meeting'
-                    ? 'Unscheduled'
-                    : 'Needs approval'
+                    ? 'Needs a date'
+                    : proposal.plan && missingPlanFields(proposal.plan).length ? 'Needs your answer' : 'Ready for review'
               return (
               <article key={proposal.proposalId} className="pivot-intake-proposal-card">
                 <div className="pivot-intake-proposal-head">
@@ -565,10 +546,11 @@ export function IntakeComposerDialog({
                 </div>
                 <div className="pivot-intake-proposal-meta">
                   <span>{getCompany(proposal.company)?.name ?? proposal.company}</span>
-                  <span>{proposal.systemId}</span>
+                  <span>{systems.find((system) => system.id === proposal.systemId)?.name}</span>
                   <span>{meetingStatus}</span>
                 </div>
                 <p>{proposal.notes.slice(0, 180) || 'No summary yet.'}</p>
+                {proposal.plan ? <p className="pivot-notice">For: {proposal.plan.forWhom || 'Needs your answer'} · Owner: {proposal.plan.owner || 'Needs your answer'}<br />Next: {missingPlanFields(proposal.plan)[0]?.question ?? 'Save the plan, then review it for approval.'}</p> : null}
                 <div className="pivot-intake-proposal-actions">
                   <button
                     type="button"
@@ -588,7 +570,6 @@ export function IntakeComposerDialog({
                     className="pivot-text-button"
                     onClick={() => {
                       setRemovedProposalIds((current) => [...current, proposal.proposalId])
-                      setAnalysisStale(true)
                     }}
                   >
                     Remove
@@ -619,13 +600,13 @@ export function IntakeComposerDialog({
                         </select>
                       </label>
                       <label>
-                        Workflow
+                        Division
                         <select value={proposal.systemId} onChange={(e) => updateProposal(index, { systemId: e.target.value })}>
                           {systems
                             .filter((system) => systemFitsCompany(system, proposal.company))
                             .map((system) => (
                               <option key={system.id} value={system.id}>
-                                {system.id} · {system.name}
+                                {system.name}
                               </option>
                             ))}
                         </select>
@@ -635,6 +616,7 @@ export function IntakeComposerDialog({
                       Notes
                       <textarea rows={3} value={proposal.notes} onChange={(e) => updateProposal(index, { notes: e.target.value.slice(0, 12000) })} maxLength={12000} />
                     </label>
+                    {proposal.plan ? <><label>Actions to complete · one per line<textarea rows={3} value={proposal.plan.actions.join('\n')} maxLength={1500} onChange={(event) => updateProposal(index, { plan: { ...proposal.plan!, actions: event.target.value.split('\n') } })} /></label><PlanFields plan={proposal.plan} onChange={(plan) => updateProposal(index, { plan })} disabled={status !== 'idle'} /><PlanSummary plan={proposal.plan} /></> : null}
                     {proposal.kind === 'meeting' ? (
                       <div className="pivot-intake-meeting-grid">
                         <label>

@@ -4,7 +4,7 @@ import { MeetingWorkspace } from '@/components/meetings/MeetingWorkspace'
 import { getMeeting } from '@/lib/data/meetings'
 import { requireFounder } from '@/lib/auth/requireFounder'
 import { entitySlugFrom, readMeetingCore, sourceLink } from '@/lib/meetings/core'
-import { readOwnedWorkSummaries } from '@/lib/workspace/data'
+import { readMeetingFollowUps } from '@/lib/meetings/followUpRead'
 
 export default async function MeetingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -13,7 +13,7 @@ export default async function MeetingPage({ params }: { params: Promise<{ id: st
   if (!row) notFound()
   const core = readMeetingCore(row.meta ?? {}, row.due_at, entitySlugFrom(row.entities))
   if (!core) notFound()
-  const followUps = await readOwnedWorkSummaries(core.followUpItemIds).catch(() => [])
+  const followUps = await readMeetingFollowUps(core.followUpItemIds).catch(() => [])
   return (
     <MeetingWorkspace
       meetingId={row.id}

@@ -1,0 +1,82 @@
+.partner-farming {
+  --pf-ink: #17251e;
+  --pf-muted: #62705c;
+  --pf-line: #d7e0cc;
+  --pf-green: #17724b;
+  --pf-paper: #fff;
+  max-width: 760px;
+  padding: 22px 22px 18px;
+  border: 1px solid #bfceaf;
+  border-radius: 15px;
+  background: var(--pf-paper);
+  color: var(--pf-ink);
+  font-family: Manrope, system-ui, sans-serif;
+  line-height: 1.45;
+}
+.partner-farming * { box-sizing: border-box; }
+.partner-farming h2,
+.partner-farming h3,
+.partner-farming p { margin: 0; }
+.partner-farming-kicker {
+  margin-bottom: 6px;
+  color: var(--pf-green);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.partner-farming h2 {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.2;
+}
+.partner-farming header p:last-child {
+  margin-top: 8px;
+  max-width: 40rem;
+  color: var(--pf-muted);
+  font-size: 15px;
+}
+.partner-farming-primary {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  margin-top: 16px;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--pf-green);
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.partner-farming-block { margin-top: 22px; }
+.partner-farming-block h3 { font-size: 16px; font-weight: 800; }
+.partner-farming ul { margin: 10px 0 0; padding: 0; list-style: none; }
+.partner-farming li {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.8fr);
+  gap: 8px 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--pf-line);
+  font-size: 14px;
+}
+.partner-farming li span:first-child { font-weight: 800; }
+.partner-farming-split { margin-top: 18px; font-weight: 700; }
+.partner-farming footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 18px;
+  color: var(--pf-muted);
+  font-size: 13px;
+}
+.partner-farming details { margin-top: 14px; color: var(--pf-muted); font-size: 13px; }
+.partner-farming summary { min-height: 44px; padding: 12px 0; cursor: pointer; font-weight: 700; }
+@media (max-width: 700px) {
+  .partner-farming { padding: 16px; }
+  .partner-farming h2 { font-size: 24px; }
+  .partner-farming li { grid-template-columns: 1fr 1fr; }
+  .partner-farming-primary { width: 100%; justify-content: center; }
+}

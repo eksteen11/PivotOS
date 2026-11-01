@@ -1,4 +1,5 @@
 import { companies, getSystem, systemFitsCompany, type Company } from '@/lib/workspace/catalogue'
+import type { ActionPlan } from '@/lib/workspace/actionPlan'
 
 export const intakeSourceLabels = [
   'Manual',
@@ -39,6 +40,7 @@ export type IntakeProposal = {
   notes: string
   requiresExternalApproval: boolean
   uncertainties: string[]
+  plan?: ActionPlan
   meeting: {
     confirmedSchedule: boolean
     startAt: string
